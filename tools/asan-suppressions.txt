@@ -18,3 +18,29 @@
 # reaches the code under investigation. Worth reporting upstream separately;
 # do NOT read this suppression as "prism is fine".
 interceptor_via_fun:prism::Processor::parse_header
+
+# Fast3D reads 512 bytes for every full CI8 palette load, but at least one
+# palette asset in the archive is 464 bytes, so the read runs 48 bytes past it.
+#
+# libultraship/src/fast/interpreter.cpp, Interpreter::GfxDpLoadTlut:
+#
+#     if (high_index == 255 && paletteByteOffset == 0) {
+#         memcpy(mRdp->palette_staging[0], src, 256);
+#         memcpy(mRdp->palette_staging[1], src + 256, 256);   // src+256 .. src+512
+#     }
+#
+# gDPLoadTLUT_pal256 sets high_index to 255, so both halves are copied whatever
+# the resource's actual length. ASan reports the first bad byte, which is the
+# region end -- hence "0 bytes after a 464-byte region" for a 256-byte read that
+# actually began 208 bytes earlier, inside the buffer.
+#
+# This is arithmetic on a palette asset's size. It does not involve a player
+# index, a screen index or a camera index, and it happens on every pal256 load
+# of that asset in any screen mode. Harmless without instrumentation: the extra
+# 48 bytes land in palette entries 232-255, which the CI8 texture never
+# indexes. Suppressed so the run reaches code that does depend on player count.
+#
+# Upstream fix would be to clamp the second copy to the resource's real size.
+# Worth reporting; do NOT read this suppression as "the renderer is fine".
+interceptor_via_fun:Fast::Interpreter::GfxDpLoadTlut
+interceptor_via_fun:Fast::gfx_load_tlut_handler_rdp
