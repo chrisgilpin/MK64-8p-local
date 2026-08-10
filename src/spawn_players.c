@@ -989,7 +989,7 @@ void spawn_and_set_player_spawns(void) {
                         D_80165230[5] = sp5C + 0x1E;
                         D_80165230[6] = sp5C + 0x1E;
                         D_80165230[7] = sp5C + 0x1E;
-                        if (gPlayerCountSelection1 == 4) {
+                        if (gPlayerCountSelection1 >= 4) {
                             func_8003B870(D_80165210, D_80165230, sp5A);
                         } else {
                             func_8003B318(D_80165210, D_80165230, sp5A);
@@ -1021,7 +1021,12 @@ void spawn_and_set_player_spawns(void) {
                 D_80165230[3] = 0.0f;
                 D_80165210[3] = 200.0f;
                 D_80165230[0] = 200.0f;
-                if (gPlayerCountSelection1 == 4) {
+                // Count dispatch to a count-specific spawn arrangement. Widened
+                // from == 4 so eight players get the four-position layout rather
+                // than the three-position one, but neither is right: eight racers
+                // need eight start positions. A spawn_players_8p_battle arrangement
+                // is required before Block Fort supports more than four.
+                if (gPlayerCountSelection1 >= 4) {
                     spawn_players_4p_battle(D_80165210, D_80165230, temp);
                 } else {
                     spawn_players_3p_battle(D_80165210, D_80165230, temp);
@@ -1051,7 +1056,7 @@ void spawn_and_set_player_spawns(void) {
                 D_80165230[1] = -400.0f;
                 D_80165230[2] = 0.0f;
                 D_80165230[3] = 0.0f;
-                if (gPlayerCountSelection1 == 4) {
+                if (gPlayerCountSelection1 >= 4) {
                     spawn_players_4p_battle(D_80165210, D_80165230, temp);
                 } else {
                     spawn_players_3p_battle(D_80165210, D_80165230, temp);
@@ -1081,7 +1086,7 @@ void spawn_and_set_player_spawns(void) {
                 D_80165230[1] = -160.0f;
                 D_80165230[2] = 0.0f;
                 D_80165230[3] = 0.0f;
-                if (gPlayerCountSelection1 == 4) {
+                if (gPlayerCountSelection1 >= 4) {
                     spawn_players_4p_battle(D_80165210, D_80165230, temp);
                 } else {
                     spawn_players_3p_battle(D_80165210, D_80165230, temp);
@@ -1111,7 +1116,7 @@ void spawn_and_set_player_spawns(void) {
                 D_80165230[1] = -575.0f;
                 D_80165230[2] = 0.0f;
                 D_80165230[3] = 0.0f;
-                if (gPlayerCountSelection1 == 4) {
+                if (gPlayerCountSelection1 >= 4) {
                     spawn_players_4p_battle(D_80165210, D_80165230, temp);
                 } else {
                     spawn_players_3p_battle(D_80165210, D_80165230, temp);
