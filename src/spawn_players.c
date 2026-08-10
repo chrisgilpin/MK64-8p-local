@@ -1325,6 +1325,9 @@ void spawn_multiplayer_cameras(u32 mode) {
         case SCREEN_MODE_3P_4P_SPLITSCREEN:
             screens = 4;
             break;
+        case SCREEN_MODE_8P:
+            screens = NUM_PLAYERS;
+            break;
     }
     for (size_t i = 0; i < screens; i++) {
         Vec3f spawn = {gPlayers[i].pos[0], gPlayers[i].pos[1], gPlayers[i].pos[2]};
@@ -1370,9 +1373,21 @@ void load_kart_textures(void) {
         case SCREEN_MODE_3P_4P_SPLITSCREEN:
             screens = 4;
             break;
+        case SCREEN_MODE_8P:
+            screens = NUM_PLAYERS;
+            break;
     }
 
-    static const size_t playerCounts[4] = { 8, 8, 4, 4 };
+    /* Subscripted by player count minus one, so it needs a row per reachable
+       count, not per screen mode. At four entries an eight-player count read
+       index seven off the end. Counts one and two are Grand Prix, which fills
+       all eight kart slots; three and four are Versus and Battle, which cap at
+       four; five through eight are the eighth-screen mode, eight karts again.
+
+       Function-local statics like this one are invisible to a sweep for
+       file-scope arrays -- worth remembering that a declaration does not have
+       to be at file scope to be a sizing dependency. */
+    static const size_t playerCounts[NUM_PLAYERS] = { 8, 8, 4, 4, 8, 8, 8, 8 };
     for (size_t i = 0; i < screens; i++) {
         for (size_t ply = 0; ply < playerCounts[gPlayerCountSelection1 - 1]; ply++) {
             func_8003CD98(&gPlayers[ply], gScreenContexts[i].camera, ply, i);
