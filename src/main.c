@@ -111,8 +111,24 @@ OSIoMesg gDmaIoMesg;
 OSMesgQueue gSIEventMesgQueue;
 OSMesg gSIEventMesgBuf[3];
 
-OSContStatus gControllerStatuses[4];
-OSContPad gControllerPads[4];
+/* These must hold one entry per ControlDeck port, not per N64 hardware port.
+ * osContGetReadData() does
+ *
+ *     memset(pad, 0, sizeof(OSContPad) * __osMaxControllers);
+ *
+ * before the ControlDeck fills it, so if the port count exceeds the length of
+ * gControllerPads that memset alone writes past the end -- before a single
+ * button is read. Widen these first, raise the port count second. */
+OSContStatus gControllerStatuses[NUM_PLAYERS];
+OSContPad gControllerPads[NUM_PLAYERS];
+
+/* The game declares the buffer and libultraship decides how much of it to
+ * clear, so these two constants size one array from opposite ends. If they ever
+ * disagree the symptom is a memset past the end of gControllerPads on the very
+ * first input read, long before anything looks input-related. */
+_Static_assert(NUM_PLAYERS == LUS_MAX_PORTS,
+               "gControllerPads is sized by NUM_PLAYERS but filled for LUS_MAX_PORTS ports; "
+               "set LUS_MAX_PORTS in CMakeLists.txt to match NUM_PLAYERS");
 u8 gControllerBits;
 // Contains a 32x32 grid of indices into gCollisionIndices containing indices into gCollisionMesh
 CollisionGrid gCollisionGrid[1024];
@@ -401,22 +417,32 @@ void update_controller(s32 index) {
 
 void read_controllers(void) {
     OSMesg msg;
+    s32 port;
 
     osContStartReadData(&gSIEventMesgQueue);
     // osRecvMesg(&gSIEventMesgQueue, &msg, OS_MESG_BLOCK);
     osContGetReadData(gControllerPads);
-    update_controller(0);
-    update_controller(1);
-    update_controller(2);
-    update_controller(3);
+
+    /* One pass per port. This was four unrolled calls because the console had
+       four ports; the ControlDeck exposes NUM_PLAYERS of them. */
+    for (port = 0; port < NUM_PLAYERS; port++) {
+        update_controller(port);
+    }
+
+    /* The aggregate deliberately stays over the first four ports.
+       It drives menu navigation and the L+R+A+B reset combo, and those read
+       "any player pressed this" -- folding in four more ports would make the
+       menus jumpier without making them more usable, and the combo easier to
+       trigger by accident. Revisit if players five through eight ever need to
+       drive a menu. */
     gControllerAny->button = (s16) (((gControllerOne->button | gControllerTwo->button) | gControllerThree->button) |
-                                     gControllerFour->button);
+                                    gControllerFour->button);
     gControllerAny->buttonPressed =
         (s16) (((gControllerOne->buttonPressed | gControllerTwo->buttonPressed) | gControllerThree->buttonPressed) |
                gControllerFour->buttonPressed);
     gControllerAny->buttonDepressed = (s16) (((gControllerOne->buttonDepressed | gControllerTwo->buttonDepressed) |
-                                               gControllerThree->buttonDepressed) |
-                                              gControllerFour->buttonDepressed);
+                                              gControllerThree->buttonDepressed) |
+                                             gControllerFour->buttonDepressed);
     gControllerAny->stickDirection =
         (s16) (((gControllerOne->stickDirection | gControllerTwo->stickDirection) | gControllerThree->stickDirection) |
                gControllerFour->stickDirection);

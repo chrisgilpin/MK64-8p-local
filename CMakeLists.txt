@@ -179,6 +179,16 @@ if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   endforeach()
 endif()
 
+# The N64 had four controller ports. This fork seats eight players, so the
+# ControlDeck -- which is a software container of ports, not the console -- needs
+# eight of them. MAXCONTROLLERS keeps its hardware meaning; LUS_MAX_PORTS carries
+# the port count. See libultraship/include/libultraship/libultra/os.h.
+#
+# PUBLIC rather than PRIVATE so the game sees the same value: osContGetReadData
+# memsets sizeof(OSContPad) * LUS_MAX_PORTS into an array the game declares, so
+# the two sides size one buffer from opposite ends. main.c asserts they agree.
+target_compile_definitions(libultraship PUBLIC LUS_MAX_PORTS=8)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
 
   nx_generate_nacp(
