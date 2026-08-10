@@ -5390,7 +5390,7 @@ void func_8009CE64(s32 arg0) {
                     break;
             }
             func_8000F124();
-            if (gScreenModeSelection == 3) {
+            if (gScreenModeSelection == SCREEN_MODE_3P_4P_SPLITSCREEN) {
                 switch (gModeSelection) {
                     case 0:
                     case 1:
