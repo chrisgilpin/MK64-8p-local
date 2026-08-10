@@ -277,19 +277,22 @@ void init_render_player(Player* player, Camera* camera, s8 playerId, s8 screenId
  * // [nothing][screen][player]
  * ALIGNED8 struct_D_802DFB80 gEncodedKartTexture[2][2][8];
  * 
- * The buffer is sized for two screens. In 3P/4P mode, the player and screen indexes
- * need to be adjusted like so:
- * 
- * Screen 3 uses buffer[unused][screen 1][slots 5-8]
- * Screen 4 uses buffer[unused][screen 2][slots 5-8]
- * 
- * Due to this remapping, 3P/4P modes only support upto four racers.
- * 
+ * The buffer was sized for two screens, so screens 3 and 4 were folded onto
+ * buffer slots 1 and 2 using player slots 5-8 -- which is why quarter-screen
+ * modes could only support four racers.
+ *
+ * Both buffers are now dimensioned per viewport, so that remapping is gone and
+ * the limit it imposed with it.
  */
 void load_kart_texture_and_render_kart_particles(s32 screenIdx) {
     s16 i;
-    s32 screenOffset = (screenIdx >= 2) ? -2: 0;
-    s32 playerOffset = (screenIdx >= 2) ? 4 : 0;
+    /* Both buffers now hold a slot per screen, so screen and player indices are
+       used directly. These were previously remapped -- screens 2-3 folded onto
+       buffer slots 0-1 with the player index shifted by four -- to fit a buffer
+       sized for two screens. Kept as named zeros rather than deleted so the
+       three index sites below still read as the remapping they replaced. */
+    s32 screenOffset = 0;
+    s32 playerOffset = 0;
 
     load_kart_texture_non_blocking(
         gPlayersToRenderPlayer[0],
