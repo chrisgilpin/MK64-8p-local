@@ -1291,12 +1291,18 @@ void func_8003CD98(Player* player, Camera* camera, s8 playerId, s8 screenId) {
                        (u8*) &D_802BFB80.arraySize8[0][screenId][playerId]);
 #endif
         } else {
+            /* Was remapped -- screen minus two, player plus four -- to fit buffers
+               that held two screens. They hold one slot per viewport now, so the
+               indices are used directly. With eight screens the old arithmetic
+               produced a negative screen index for screens 0 and 1 and a player
+               index past the end for the upper half of the roster, writing below
+               and beyond the buffers respectively. */
             load_kart_palette(player, playerId, screenId, 0);
             load_kart_palette(player, playerId, screenId, 1);
-            load_kart_texture(player, (s8) (playerId + 4), screenId, (s8) (screenId - 2), 0);
+            load_kart_texture(player, playerId, screenId, screenId, 0);
 #ifdef TARGET_N64
-            mio0decode((u8*) &gEncodedKartTexture[0][screenId - 2][playerId + 4],
-                       (u8*) &D_802BFB80.arraySize8[0][screenId - 2][playerId + 4]);
+            mio0decode((u8*) &gEncodedKartTexture[0][screenId][playerId],
+                       (u8*) &D_802BFB80.arraySize8[0][screenId][playerId]);
 #endif
         }
 
