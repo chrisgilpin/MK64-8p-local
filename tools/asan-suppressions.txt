@@ -1,0 +1,20 @@
+# ASan suppressions for reaching OUR bugs.
+#
+# prism is the shader preprocessor pulled in via FetchContent
+# (build-cmake/_deps/prism-src). Its parse_header() reports through the
+# memcpy interceptor. Two candidate causes, both upstream and both
+# pre-existing in vanilla SpaghettiKart:
+#
+#   1. processor.cpp:65-68 erases m_lines.begin() and then reads
+#      m_lines[0] without re-checking empty(). A single-line @prism file
+#      indexes an empty vector.
+#   2. More likely: this build is ASan-instrumented but links the system
+#      /usr/lib/libc++.1.dylib, which is not. The annotation mismatch makes
+#      ASan report false container-overflows inside std::string/std::vector.
+#      (detect_container_overflow=0 in tools/run-asan.sh covers this one.)
+#
+# Either way it is not the eight-player bug, and it aborts the process long
+# before the kart and screen buffers are touched. Suppressed so the run
+# reaches the code under investigation. Worth reporting upstream separately;
+# do NOT read this suppression as "prism is fine".
+interceptor_via_fun:prism::Processor::parse_header
