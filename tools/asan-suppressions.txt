@@ -40,7 +40,16 @@ interceptor_via_fun:prism::Processor::parse_header
 # 48 bytes land in palette entries 232-255, which the CI8 texture never
 # indexes. Suppressed so the run reaches code that does depend on player count.
 #
-# Upstream fix would be to clamp the second copy to the resource's real size.
-# Worth reporting; do NOT read this suppression as "the renderer is fine".
-interceptor_via_fun:Fast::Interpreter::GfxDpLoadTlut
-interceptor_via_fun:Fast::gfx_load_tlut_handler_rdp
+# FIXED, not suppressed -- the entries below are deliberately absent.
+#
+# Two reasons. First, suppression could not have worked here: frame #0 of that
+# report was __asan_memcpy, the copy the compiler emits inside instrumented
+# code, not the wrap_memcpy interceptor. interceptor_via_fun only applies to
+# the latter, which is why the prism entry above works and an equivalent entry
+# here silently did nothing.
+#
+# Second, the real length was reachable all along: Fast::Texture carries
+# ImageDataSize, so GfxDpLoadTlut can bound its copies by the resource instead
+# of assuming 512 bytes. Fixed in libultraship/src/fast/interpreter.cpp. Note
+# that libultraship is a submodule, so that change is NOT captured by commits
+# in this repository -- see the commit inside the submodule itself.
