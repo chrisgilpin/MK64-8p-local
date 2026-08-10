@@ -4,6 +4,7 @@
 #include <stubs.h>
 #include <common_structs.h>
 #include <defines.h>
+#include <racers.h>
 #include "code_800029B0.h"
 #include "camera.h"
 #include "racing/math_util.h"
@@ -355,7 +356,7 @@ void render_players(Camera* camera, s32 screenIdx) {
     init_render_player(gPlayerTwo, camera, PLAYER_TWO, screenIdx);
     init_render_player(gPlayerThree, camera, PLAYER_THREE, screenIdx);
     init_render_player(gPlayerFour, camera, PLAYER_FOUR, screenIdx);
-    if (gActiveScreenMode != SCREEN_MODE_3P_4P_SPLITSCREEN) {
+    if (racers_to_process(gActiveScreenMode) > 4) {
         init_render_player(gPlayerFive, camera, PLAYER_FIVE, screenIdx);
         init_render_player(gPlayerSix, camera, PLAYER_SIX, screenIdx);
         init_render_player(gPlayerSeven, camera, PLAYER_SEVEN, screenIdx);
@@ -371,7 +372,7 @@ void render_players(Camera* camera, s32 screenIdx) {
     try_rendering_player(gPlayerTwo, PLAYER_TWO, screenIdx);
     try_rendering_player(gPlayerThree, PLAYER_THREE, screenIdx);
     try_rendering_player(gPlayerFour, PLAYER_FOUR, screenIdx);
-    if (gActiveScreenMode != SCREEN_MODE_3P_4P_SPLITSCREEN) {
+    if (racers_to_process(gActiveScreenMode) > 4) {
         try_rendering_player(gPlayerFive, PLAYER_FIVE, screenIdx);
         try_rendering_player(gPlayerSix, PLAYER_SIX, screenIdx);
         try_rendering_player(gPlayerSeven, PLAYER_SEVEN, screenIdx);
@@ -384,7 +385,7 @@ void render_players(Camera* camera, s32 screenIdx) {
     render_kart_particles(gPlayerTwo, PLAYER_TWO, screenIdx);
     render_kart_particles(gPlayerThree, PLAYER_THREE, screenIdx);
     render_kart_particles(gPlayerFour, PLAYER_FOUR, screenIdx);
-    if (gActiveScreenMode != SCREEN_MODE_3P_4P_SPLITSCREEN) {
+    if (racers_to_process(gActiveScreenMode) > 4) {
         render_kart_particles(gPlayerFive, PLAYER_FIVE, screenIdx);
         render_kart_particles(gPlayerSix, PLAYER_SIX, screenIdx);
         render_kart_particles(gPlayerSeven, PLAYER_SEVEN, screenIdx);
@@ -545,7 +546,7 @@ void func_80021B0C(void) {
     func_8006E7CC(gPlayerTwo, 1, 0);
     func_8006E7CC(gPlayerThree, 2, 0);
     func_8006E7CC(gPlayerFour, 3, 0);
-    if (gActiveScreenMode != SCREEN_MODE_3P_4P_SPLITSCREEN) {
+    if (racers_to_process(gActiveScreenMode) > 4) {
         func_8006E7CC(gPlayerFive, 4, 0);
         func_8006E7CC(gPlayerSix, 5, 0);
         func_8006E7CC(gPlayerSeven, 6, 0);
@@ -572,7 +573,7 @@ void func_80021C78(void) {
     func_8006E848(gPlayerTwo, 1, 1);
     func_8006E848(gPlayerThree, 2, 1);
     func_8006E848(gPlayerFour, 3, 1);
-    if (gActiveScreenMode != SCREEN_MODE_3P_4P_SPLITSCREEN) {
+    if (racers_to_process(gActiveScreenMode) > 4) {
         func_8006E848(gPlayerFive, 4, 1);
         func_8006E848(gPlayerSix, 5, 1);
         func_8006E848(gPlayerSeven, 6, 1);
