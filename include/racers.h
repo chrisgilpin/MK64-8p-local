@@ -33,7 +33,16 @@
  * @return the number of leading racer slots to process, 4 or NUM_PLAYERS.
  */
 static inline s32 racers_to_process(s32 screenMode) {
-    return (screenMode == SCREEN_MODE_3P_4P_SPLITSCREEN) ? 4 : NUM_PLAYERS;
+    /* Only the quarter-screen mode narrows the range, and only because Versus
+       and Battle cap at four racers there. Every other mode -- including the
+       eighth-screen one, which exists precisely to carry eight -- covers all
+       slots. Written as an explicit test on the narrowing case so adding a mode
+       defaults to processing every racer rather than silently skipping some;
+       an unrendered kart is far harder to notice than a wasted pass. */
+    if (screenMode == SCREEN_MODE_3P_4P_SPLITSCREEN) {
+        return 4;
+    }
+    return NUM_PLAYERS;
 }
 
 #endif /* RACERS_H */
