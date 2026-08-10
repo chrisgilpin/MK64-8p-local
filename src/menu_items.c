@@ -1591,7 +1591,7 @@ void func_80091FA4(void) {
 }
 
 void func_80092148(void) {
-    struct Controller* controller = gControllerFive;
+    struct Controller* controller = gControllerAny;
     s32 isHeld;
 
     isHeld = controller->button ? 1 : 0;
@@ -9229,7 +9229,7 @@ void handle_menus_with_pri_arg(s32 priSpecial) {
             case MENU_ITEM_UI_START_RECORD_TIME:
                 switch (menuItem->state) {
                     case 0:
-                        if (gControllerFive->button & R_TRIG) {
+                        if (gControllerAny->button & R_TRIG) {
                             menuItem->state = (s32) 1U;
                             play_sound2(SOUND_ACTION_PING);
                         } else {
@@ -11617,7 +11617,7 @@ void func_800ACA14(MenuItem* arg0) {
                 break;
             }
 
-            if ((gControllerFive->buttonPressed | gControllerFive->stickPressed) & 0x800) {
+            if ((gControllerAny->buttonPressed | gControllerAny->stickPressed) & 0x800) {
                 if (arg0->state >= 0xC) {
                     arg0->state--;
                     play_sound2(SOUND_MENU_CURSOR_MOVE);
@@ -11627,7 +11627,7 @@ void func_800ACA14(MenuItem* arg0) {
                     arg0->subState = -1;
                 }
             }
-            if ((gControllerFive->buttonPressed | gControllerFive->stickPressed) & 0x400) {
+            if ((gControllerAny->buttonPressed | gControllerAny->stickPressed) & 0x400) {
                 if (arg0->state < 0xC) {
                     arg0->state++;
                     play_sound2(SOUND_MENU_CURSOR_MOVE);
@@ -11637,7 +11637,7 @@ void func_800ACA14(MenuItem* arg0) {
                     arg0->subState = 1;
                 }
             }
-            if (gControllerFive->buttonPressed & 0x9000) {
+            if (gControllerAny->buttonPressed & 0x9000) {
                 func_8009DFE0(0x0000001E);
                 func_800CA330(0x19U);
                 play_sound2(SOUND_ACTION_CONTINUE_UNKNOWN);
@@ -11689,7 +11689,7 @@ void func_800ACC50(MenuItem* arg0) {
         case 12:
         case 13:
             if (is_screen_being_faded() == 0) {
-                if ((gControllerFive->buttonPressed | gControllerFive->stickPressed) & 0x800) {
+                if ((gControllerAny->buttonPressed | gControllerAny->stickPressed) & 0x800) {
                     if (arg0->state >= 0xB) {
                         arg0->state--;
                         play_sound2(SOUND_MENU_CURSOR_MOVE);
@@ -11699,7 +11699,7 @@ void func_800ACC50(MenuItem* arg0) {
                         arg0->subState = -1;
                     }
                 }
-                if ((gControllerFive->buttonPressed | gControllerFive->stickPressed) & 0x400) {
+                if ((gControllerAny->buttonPressed | gControllerAny->stickPressed) & 0x400) {
                     if (arg0->state < 0xD) {
                         arg0->state++;
                         play_sound2(SOUND_MENU_CURSOR_MOVE);
@@ -11709,7 +11709,7 @@ void func_800ACC50(MenuItem* arg0) {
                         arg0->subState = 1;
                     }
                 }
-                if (gControllerFive->buttonPressed & 0x9000) {
+                if (gControllerAny->buttonPressed & 0x9000) {
                     func_8009DFE0(0x0000001E);
                     play_sound2(SOUND_MENU_OK_CLICKED);
                     if (gModeSelection == VERSUS) {
@@ -12672,7 +12672,7 @@ void func_800AF004(MenuItem* arg0) {
         case 5:
             arg0->param1 += 1;
             if ((arg0->param1 >= 0x65) &&
-                ((gControllerFive->buttonPressed != 0) || (gControllerFive->stickPressed != 0))) {
+                ((gControllerAny->buttonPressed != 0) || (gControllerAny->stickPressed != 0))) {
                 arg0->state = 6;
                 arg0->param1 = 0;
                 if (D_802874D8.unk1D < 3) {
