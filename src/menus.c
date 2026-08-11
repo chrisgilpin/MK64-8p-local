@@ -9,6 +9,7 @@
 #include "menus.h"
 #include "engine/TrackBrowser.h"
 #include "engine/editor/Editor.h"
+#include "port/Engine.h"
 #include "main.h"
 #include "code_800029B0.h"
 #include "racing/actors.h"
@@ -35,7 +36,12 @@ f32 gIntroModelPosY;
 f32 gIntroModelPosZ;
 s32 gMenuFadeType;
 s8 gCharacterGridSelections[NUM_PLAYERS];   // Map from each player to current grid position (1-4 top, 5-8 bottom)
-bool gCharacterGridIsSelected[4]; // Sets true if a character is selected for each player
+/* One entry per player, not per quadrant. player_select_menu_act() indexes this
+   by controller, and the reset loop in the CHARACTER_SELECT_MENU case walks
+   ARRAY_COUNT(gCharacterGridSelections) -- so at four entries every player above
+   the fourth wrote past the end, into whatever global the linker placed next.
+   That is what scrambled the cursors on the player-select screen. */
+bool gCharacterGridIsSelected[NUM_PLAYERS]; // Sets true if a character is selected for each player
 s8 gSubMenuSelection;             // Map Select states, Options and Ghost Data text selection
 s8 gMainMenuSelection;
 s8 gPlayerSelectMenuSelection; // grid screen state?
@@ -116,8 +122,14 @@ _Static_assert(ARRAY_COUNT(sScreenModePlayerTable) == ARRAY_COUNT(sScreenModePla
 _Static_assert(ARRAY_COUNT(sScreenModePlayerTable) == NUM_SCREEN_MODE_ROWS,
                "NUM_SCREEN_MODE_ROWS must match the screen mode tables");
 
-// Set indexed slots numbers for one-two-three-four mode selection
-const s8 gPlayerModeSelection[] = { 1, 2, 1, 1 };
+/* Highest row the game-mode column can move to, per player count -- so one less
+   than the number of usable entries in that count's gGameModePlayerSelection
+   row. Counts five and up offer Grand Prix, VS and Battle, the same three as two
+   players, so they stop at row 2.
+
+   Sized rather than left open: the header declared it unsized, so the
+   four-entry definition won and every count above four read past the end. */
+const s8 gPlayerModeSelection[NUM_PLAYERS] = { 1, 2, 1, 1, 2, 2, 2, 2 };
 
 // Limit for each index column in one-two-three-four mode selection
 const s8 sGameModePlayerColumnDefault[][3] = {
@@ -155,6 +167,21 @@ const s32 gGameModePlayerSelection[][3] = {
     { GRAND_PRIX, VERSUS, BATTLE },          // 7p game modes
     { GRAND_PRIX, VERSUS, BATTLE },          // 8p game modes
 };
+
+/* Every table above is subscripted by gPlayerCount - 1 somewhere in
+   main_menu_act(), so each needs a row per player. Three of them already did and
+   gPlayerModeSelection did not, which read past its end the moment the picker
+   could reach five -- and did so silently, because an unsized extern in the
+   header hid the length from every use site. Checked here so the next table
+   added to this family cannot repeat it. */
+_Static_assert(ARRAY_COUNT(gPlayerModeSelection) == NUM_PLAYERS,
+               "gPlayerModeSelection is indexed by player count and needs a row each");
+_Static_assert(ARRAY_COUNT(gGameModePlayerSelection) == NUM_PLAYERS,
+               "gGameModePlayerSelection is indexed by player count and needs a row each");
+_Static_assert(ARRAY_COUNT(sGameModePlayerColumnDefault) == NUM_PLAYERS,
+               "sGameModePlayerColumnDefault is indexed by player count and needs a row each");
+_Static_assert(ARRAY_COUNT(sGameModePlayerColumnExtra) == NUM_PLAYERS,
+               "sGameModePlayerColumnExtra is indexed by player count and needs a row each");
 
 // Map from character grid position id to character id
 // Note: changing order doesn't affect graphics, only the selection
@@ -195,7 +222,19 @@ void update_menus(void) {
     u16 controllerIdx;
 
     if (gFadeModeSelection == FADE_MODE_NONE) {
-        for (controllerIdx = 0; controllerIdx < 4; controllerIdx++) {
+        /* The character-select screen is the one menu where players five through
+           eight act for themselves, each on their own controller, so it polls
+           the full roster. Every other menu is a single-controller flow that
+           only ever reacts to controller one (the act functions gate their
+           real actions on controllerIdx == PLAYER_ONE), so widening the loop
+           for them would just spin over pads that do nothing -- it stays at
+           four to leave their behaviour untouched. */
+        u16 controllerCount =
+            ((gMenuSelection == CHARACTER_SELECT_MENU) || (gMenuSelection == PLAYER_SELECT_MENU_FROM_QUIT))
+                ? NUM_PLAYERS
+                : 4;
+
+        for (controllerIdx = 0; controllerIdx < controllerCount; controllerIdx++) {
             // Debug, quick jump through menus using the start button.
             if ((is_screen_being_faded() == 0) && (gEnableDebugMode) &&
                 ((gControllers[controllerIdx].buttonPressed & START_BUTTON) != 0)) {
@@ -1045,6 +1084,53 @@ void controller_pak_menu_act(struct Controller* controller, UNUSED u16 controlle
 }
 
 /**
+ * Dev shortcut: drop straight into a Grand Prix from the title screen, skipping
+ * the player-count, mode, CC, course and character menus.
+ *
+ * It reuses the debug menu's own launch path. Setting gDebugMenuSelection to
+ * DEBUG_MENU_OPTION_SELECTED is the crucial part: spawn_players reads it and
+ * auto-assigns each kart a character from gCharacterSelections instead of
+ * waiting on character select, so this needs no character input at all.
+ *
+ * Player count and CC come from CVars (gAutoRacePlayers, gAutoRaceCC) so the
+ * target can change without a rebuild; the course is left at whatever is
+ * currently selected -- the mushroom cup by default. gModeSelection is Grand
+ * Prix by default and set here explicitly so the shortcut is order-independent.
+ */
+void debug_auto_start_race(void) {
+    s32 players = CVarGetInteger("gAutoRacePlayers", 5);
+    s32 cc = CVarGetInteger("gAutoRaceCC", CC_150);
+
+    if (players < 1) {
+        players = 1;
+    }
+    if (players > NUM_PLAYERS) {
+        players = NUM_PLAYERS;
+    }
+    if (cc < CC_50) {
+        cc = CC_50;
+    }
+    if (cc > CC_EXTRA) {
+        cc = CC_EXTRA;
+    }
+
+    gScreenModeListIndex = sScreenModeIdxFromPlayerMode[players - 1];
+    gScreenModeSelection = sScreenModePlayerTable[gScreenModeListIndex];
+    gPlayerCountSelection1 = gPlayerCount = players;
+
+    gModeSelection = GRAND_PRIX;
+    gGameModeMenuColumn[players - 1] = 0; /* the Grand Prix column */
+    gCCSelection = cc;
+    set_mirror_mode((cc == CC_EXTRA) ? 1 : 0);
+
+    func_8009E1C0();
+    func_800CA330(0x19);
+    gDebugMenuSelection = DEBUG_MENU_OPTION_SELECTED;
+    gDemoMode = DEMO_MODE_INACTIVE;
+    play_sound2(SOUND_MENU_OK_CLICKED);
+}
+
+/**
  * Navigation of the main splash start screen menu
  * Also handles debug menu options
  */
@@ -1055,6 +1141,14 @@ void splash_menu_act(struct Controller* controller, u16 controllerIdx) {
     btnAndStick = controller->buttonPressed | controller->stickPressed;
 
     if (is_screen_being_faded() == 0) {
+        /* Press P on the keyboard to skip straight into the race. Checked once
+           (via controller one's pass) and before anything else, so a stray key
+           does not also drive the menu. The key read is edge-detected in the
+           port layer, so holding P fires a single launch. */
+        if ((controllerIdx == PLAYER_ONE) && PortAutoStartRaceKeyPressed()) {
+            debug_auto_start_race();
+            return;
+        }
         if (controllerIdx == PLAYER_ONE) {
             gMenuDelayTimer += 1;
         }

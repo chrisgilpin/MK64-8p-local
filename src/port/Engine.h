@@ -123,6 +123,9 @@ uint32_t OTRGetGameViewportHeight();
 uint32_t OTRCalculateCenterOfAreaFromRightEdge(int32_t center);
 uint32_t OTRCalculateCenterOfAreaFromLeftEdge(int32_t center);
 int32_t GameEngine_ResourceGetTexTypeByName(const char* name);
+/* True on the frame the auto-start-race key (P) transitions from up to down.
+   Edge-detected, so it fires once per press; see Engine.cpp. */
+uint8_t PortAutoStartRaceKeyPressed(void);
 #ifdef __cplusplus
 }
 #endif

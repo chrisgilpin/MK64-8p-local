@@ -787,6 +787,27 @@ extern "C" float OTRGetDimensionFromLeftEdge(float v) {
     return (SCREEN_WIDTH / 2 - SCREEN_HEIGHT / 2 * OTRGetAspectRatio() + (v));
 }
 
+/* Edge-detected 'P' for the title-screen auto-start-race shortcut. Reads SDL's
+   keyboard state directly, which is valid for both SDL window backends the Mac
+   build uses (OpenGL and Metal) -- the freecam helper only checks OpenGL, so it
+   would miss keys on this Metal build. Returns true only on the down edge, so a
+   held key fires once. */
+extern "C" uint8_t PortAutoStartRaceKeyPressed(void) {
+    static bool sPrevDown = false;
+    bool down = false;
+
+    auto window = GameEngine::Instance->context->GetWindow();
+    auto backend = window->GetWindowBackend();
+    if (backend == Fast::WindowBackend::FAST3D_SDL_OPENGL || backend == Fast::WindowBackend::FAST3D_SDL_METAL) {
+        const uint8_t* keys = SDL_GetKeyboardState(nullptr);
+        down = (keys != nullptr) && (keys[SDL_SCANCODE_P] != 0);
+    }
+
+    bool pressed = down && !sPrevDown;
+    sPrevDown = down;
+    return pressed ? 1 : 0;
+}
+
 extern "C" int16_t OTRGetRectDimensionFromLeftEdge(float v) {
     return ((int) floorf(OTRGetDimensionFromLeftEdge(v)));
 }
