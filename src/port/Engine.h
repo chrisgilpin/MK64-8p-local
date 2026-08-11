@@ -126,6 +126,9 @@ int32_t GameEngine_ResourceGetTexTypeByName(const char* name);
 /* True on the frame the auto-start-race key (P) transitions from up to down.
    Edge-detected, so it fires once per press; see Engine.cpp. */
 uint8_t PortAutoStartRaceKeyPressed(void);
+/* Rising-edge state of number keys 1..8, one bit per key (bit i => player i+1).
+   Fires once per press; used to toggle a player between AI and human control. */
+uint8_t PortPlayerCpuToggleKeysPressed(void);
 #ifdef __cplusplus
 }
 #endif

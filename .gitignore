@@ -133,3 +133,12 @@ _packages/
 out/
 
 compile_commands.json
+
+# Local debug previews
+/bundle7*.png
+/check_*.png
+assets/textures/menu_player_icons/*_big.png
+assets/textures/menu_player_icons/*_preview.png
+assets/textures/menu_player_icons/check_*.png
+assets/textures/menu_player_icons/decoded_*.png
+assets/textures/menu_player_icons/bundle*.png

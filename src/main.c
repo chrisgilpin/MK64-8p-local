@@ -41,9 +41,12 @@
 #include "port/Engine.h"
 #include "engine/Matrix.h"
 #include <screen_grid.h>
+#include <sounds.h>
 
 // Declarations (not in this file)
 void func_80091B78(void);
+/* Eighth-screen Grand Prix between-course Driver's Points hold (race_logic.c). */
+extern s32 g8pResultsHold;
 
 void audio_init();
 
@@ -863,7 +866,14 @@ void race_logic_loop(void) {
 
     func_802A4300();
     func_800591B4();
-    func_80093E20();
+    /* During the eighth-screen Grand Prix between-course hold, draw the Driver's
+       Points standings (default menu pass) instead of the in-race special pass;
+       the standings item is an ordinary menu item the special pass skips. */
+    if (g8pResultsHold) {
+        handle_8p_results_menus();
+    } else {
+        func_80093E20();
+    }
 #if DVDL
     display_dvdl();
 #endif
@@ -1220,6 +1230,43 @@ void thread5_game_loop(void) {
     func_800C5CB8();
 }
 
+/**
+ * Keyboard "referee" control: number keys 1..8 hand a player's kart to the AI,
+ * or take it back, mid-race.
+ *
+ * Toggling flips only the PLAYER_CPU bit and leaves PLAYER_HUMAN set, so the
+ * kart keeps its viewport, HUD and controller port. With CPU set the AI drives
+ * (controller input is gated on HUMAN && !CPU); cleared, the human drives again.
+ * Same flip the player-1 debug button performs, extended to every port. Only a
+ * real human slot is eligible -- the AI-fill karts in a five-player Grand Prix
+ * are PLAYER_CPU without PLAYER_HUMAN, so their keys are inert (they have no
+ * controller to hand back to).
+ */
+void update_cpu_takeover_toggles(void) {
+    u8 mask;
+    s32 i;
+
+    if (gGamestate != RACING) {
+        return;
+    }
+
+    mask = PortPlayerCpuToggleKeysPressed();
+    if (mask == 0) {
+        return;
+    }
+
+    for (i = 0; i < NUM_PLAYERS; i++) {
+        if ((mask & (1 << i)) == 0) {
+            continue;
+        }
+        if ((gPlayers[i].type & PLAYER_HUMAN) == 0) {
+            continue;
+        }
+        gPlayers[i].type ^= PLAYER_CPU;
+        play_sound2((gPlayers[i].type & PLAYER_CPU) ? SOUND_MENU_SELECT : SOUND_MENU_OK_CLICKED);
+    }
+}
+
 void thread5_iteration(void) {
     func_800CB2C4();
     calculate_delta_time();
@@ -1240,6 +1287,7 @@ void thread5_iteration(void) {
     profiler_log_thread5_time(THREAD5_START);
     config_gfx_pool();
     read_controllers();
+    update_cpu_takeover_toggles();
     FB_CreateFramebuffers();
     clear_framebuffer(0); // Clear the framebuffer
     game_state_handler();

@@ -223,6 +223,8 @@ void* GetStarCup(void);
 
 void* GetSpecialCup(void);
 
+void* GetGoodhouseCup(void);
+
 void* GetBattleCup(void);
 
 void* GetCup();

@@ -149,6 +149,12 @@ void func_8028E298(void) {
     update_player_rankings();
 }
 
+/* Eighth-screen Grand Prix between-course Driver's Points hold. Set when the
+   standings are raised in RACE_FINISHED; the RACE_EXIT arm counts the timer up
+   and waits for a button before advancing. See handle_8p_results_menus(). */
+s32 g8pResultsHold = 0;
+s32 g8pResultsHoldTimer = 0;
+
 void set_next_course(void) {
 
     if (D_80150120) {
@@ -956,6 +962,9 @@ void func_8028FCBC(void) {
 
             break;
         case RACE_SETUP:
+            /* A fresh course is loading; clear any stale between-course hold so
+               the Driver's Points standings never linger into the next race. */
+            g8pResultsHold = 0;
             func_8028F914();
             if (D_802BA034 == 1.0f) {
                 if (gActiveScreenMode != SCREEN_MODE_1P) {
@@ -1058,8 +1067,11 @@ void func_8028FCBC(void) {
                                 }
                             }
                             if (allDone) {
+                                /* Rank one is the winner; the Driver's Points
+                                   screen and its camera key off this index. */
+                                gPlayerWinningIndex = gGPCurrentRacePlayerIdByRank[0];
                                 func_8028E298();
-                                D_802BA038 = 600;
+                                D_802BA038 = 150;
                                 gRaceState = RACE_FINISHED;
                             }
                             break;
@@ -1089,18 +1101,16 @@ void func_8028FCBC(void) {
                 switch (gModeSelection) {
                     case GRAND_PRIX:
                         if (gScreenModeSelection == SCREEN_MODE_8P) {
-                            /* The winner-screen-expand transitions (func_8028E678
-                               and func_8028E438) have no eighth-screen arm, so
-                               they would leave the mode stuck. Advance directly
-                               instead: set_next_course() bumps the cup to the
-                               next track (or ENDING after the last), and the
-                               quit-to-transition fields carry the scene change --
-                               the same three lines func_8028E678 ends on for the
-                               smaller modes, without the screen animation. */
-                            gIsInQuitToMenuTransition = 1;
-                            gQuitToMenuTransitionCounter = 5;
+                            /* Raise the Driver's Points list (MENU_ITEM_TYPE_0AB),
+                               not the RETRY/QUIT prompt (0AC / func_80092564).
+                               handle_8p_results_menus() (main.c) draws it each
+                               frame; the RACE_EXIT arm below waits for a button,
+                               then advances. The native winner-screen expand that
+                               normally spawns this list has no eighth-screen arm. */
+                            show_8p_drivers_points();
+                            g8pResultsHold = 1;
+                            g8pResultsHoldTimer = 0;
                             gRaceState = RACE_EXIT;
-                            set_next_course();
                         } else if (D_80150120 != 0) {
                             func_8028E678();
                         } else if (gScreenModeSelection == SCREEN_MODE_1P) {
@@ -1130,6 +1140,27 @@ void func_8028FCBC(void) {
             }
             break;
         case RACE_EXIT:
+            if (g8pResultsHold) {
+                /* Driver's Points standings are up (see the eighth-screen arm in
+                   RACE_FINISHED). Hold at least ~3s so the list can slide in and
+                   be read, then let any controller press A or Start to load the
+                   next course. This arm runs once per process_game_tick, and
+                   gCourseTimer advances by TRACK_TIMER_ITER (~1/60s) on the same
+                   cadence, so 180 ticks ≈ 3 seconds. buttonPressed is edge-
+                   detected, so a button still held from the finish cannot skip
+                   the minimum display time. */
+                if (g8pResultsHoldTimer < 0x7FFF) {
+                    g8pResultsHoldTimer++;
+                }
+                if ((g8pResultsHoldTimer > 180) &&
+                    (gControllerAny->buttonPressed & (A_BUTTON | START_BUTTON))) {
+                    g8pResultsHold = 0;
+                    play_sound2(SOUND_MENU_OK_CLICKED);
+                    gIsInQuitToMenuTransition = 1;
+                    gQuitToMenuTransitionCounter = 5;
+                    set_next_course();
+                }
+            }
             break;
     }
 }

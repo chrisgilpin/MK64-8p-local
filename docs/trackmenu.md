@@ -34,6 +34,20 @@ Guides for making custom tracks!
 
 <br><br>
 <div class="pagebutton">
+<a class="pagea" href="editor.html">
+<div class="pagelink">
+  <div class="pageimg"><img width=320 src="buttonimage.png" /></div>
+  <div class="content">
+    <div class="pageheading">Browser Track Editor</div>
+    <div class="pagedescription">
+      <p>Create tracks in the browser — no Blender required.</p>
+    </div>
+  </div>
+</div>
+</a>
+</div>
+
+<div class="pagebutton">
 <a class="pagea" href="setup.html">
 <div class="pagelink">
   <div class="pageimg"><img width=320 src="buttonimage.png" /></div>
@@ -163,6 +177,7 @@ Guides for making custom tracks!
 
 @subpage trackoverview
 @subpage quick
+@subpage editor
 @subpage setup
 @subpage materials
 @subpage objectproperties

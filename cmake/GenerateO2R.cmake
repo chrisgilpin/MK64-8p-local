@@ -20,3 +20,17 @@ execute_process(
 if(NOT COPY_RESULT EQUAL 0)
   message(FATAL_ERROR "Failed to stage spaghetti.o2r")
 endif()
+
+# Also refresh the running app bundle when it already exists. The app target's
+# POST_BUILD only runs on a binary relink, so an assets-only rebuild used to
+# leave Contents/Resources/spaghetti.o2r stale (e.g. custom 5P–8P menu icons).
+set(_APP_O2R "${BINARY_DIR}/SpaghettiKart.app/Contents/Resources/spaghetti.o2r")
+if(EXISTS "${BINARY_DIR}/SpaghettiKart.app/Contents/Resources")
+  execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${BINARY_DIR}/spaghetti.o2r" "${_APP_O2R}"
+    RESULT_VARIABLE APP_COPY_RESULT)
+  if(NOT APP_COPY_RESULT EQUAL 0)
+    message(WARNING "Failed to refresh app-bundle spaghetti.o2r")
+  endif()
+endif()

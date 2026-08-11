@@ -2019,8 +2019,14 @@ u32 numTimes = 0;
  */
 bool is_cull_box(const char* filePath);
 void generate_collision_mesh(Gfx* addr, s8 surfaceType, u16 sectionId) {
+    if (addr == NULL) {
+        return;
+    }
     if (GameEngine_OTRSigCheck((char*)addr)) {
         addr = LOAD_ASSET(addr);
+        if (addr == NULL) {
+            return;
+        }
     }
     bool run = true;
     int8_t opcode;
@@ -2040,15 +2046,27 @@ void generate_collision_mesh(Gfx* addr, s8 surfaceType, u16 sectionId) {
         switch(opcode) {
             case G_DL:
                 // G_DL's hi contains an addr to another DL.
-                generate_collision_mesh((Gfx*) hi, surfaceType, sectionId);
+                if ((Gfx*) hi != NULL) {
+                    generate_collision_mesh((Gfx*) hi, surfaceType, sectionId);
+                }
                 break;
             case G_DL_OTR_HASH:
                 gfx++;
                 uint64_t hash = ((uint64_t)gfx->words.w0) << 32 | gfx->words.w1;
-                generate_collision_mesh(ResourceGetDataByCrc(hash), surfaceType, sectionId);
+                {
+                    Gfx* child = (Gfx*) ResourceGetDataByCrc(hash);
+                    if (child != NULL) {
+                        generate_collision_mesh(child, surfaceType, sectionId);
+                    }
+                }
                 break;
             case G_DL_OTR_FILEPATH:
-                generate_collision_mesh(ResourceGetDataByName((const char*)hi), surfaceType, sectionId);
+                {
+                    Gfx* child = (Gfx*) ResourceGetDataByName((const char*) hi);
+                    if (child != NULL) {
+                        generate_collision_mesh(child, surfaceType, sectionId);
+                    }
+                }
                 break;
             case G_VTX:{
                 uintptr_t ptr = hi;
@@ -2117,6 +2135,9 @@ void generate_collision_mesh(Gfx* addr, s8 surfaceType, u16 sectionId) {
 }
 
 bool is_cull_box(const char* filePath) {
+    if (filePath == NULL) {
+        return false;
+    }
     const char* suffix = "cull";
     size_t fileLen = strlen(filePath);
     size_t suffixLen = strlen(suffix);

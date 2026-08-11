@@ -358,8 +358,9 @@ char* gCupNames[] = {
     "flower cup",
     "star cup",
     "special cup",
+    "goodhouse",
     "battle",
-    // ????
+    // legacy / padding (some old tables index past the live cup list)
     "mushroom cup",
     "flower cup",
     "star cup",
@@ -1129,6 +1130,21 @@ MenuTexture* D_800E8234[] = {
     seg2_menu_3p_column, D_0200482C, seg2_menu_4p_column, D_02004854,
 };
 
+/* Column art for the selected player-count icon. Counts five through eight
+   host on the 2P slot (index 1) and swap in dedicated NP GAME headers. */
+static MenuTexture* main_menu_player_column(s32 iconIndex) {
+    if (iconIndex == 1 && gPlayerCount >= 5 && gPlayerCount <= 8) {
+        static MenuTexture* const sExtraColumns[] = {
+            seg2_menu_5p_column,
+            seg2_menu_6p_column,
+            seg2_menu_7p_column,
+            seg2_menu_8p_column,
+        };
+        return sExtraColumns[gPlayerCount - 5];
+    }
+    return D_800E8234[iconIndex * 2];
+}
+
 MenuTexture* D_800E8254[] = {
     seg2_game_select_texture,
     seg2_menu_1p_column,
@@ -1726,6 +1742,84 @@ void func_80092564(void) {
     add_menu_item(MENU_ITEM_TYPE_0AC, 0, 0, MENU_ITEM_PRIORITY_0);
     func_8005D18C();
     func_8001968C();
+}
+
+/**
+ * Award this course's Grand Prix points to the top finishers.
+ *
+ * The ending ceremony's award animation (func_800AC458) adds gGPPointRewards[i]
+ * to the character who placed i-th, counting up one point per frame. An eighth-
+ * screen Grand Prix never reaches that ceremony, so the cumulative totals the
+ * Driver's Points list reads would stay zero. This applies the same award --
+ * ranks zero through three earn {9, 6, 3, 1} -- immediately, without the count-up.
+ */
+void award_8p_gp_points(void) {
+    s32 rank;
+
+    for (rank = 0; rank < (s32) ARRAY_COUNT(gGPPointRewards); rank++) {
+        s32 playerId = gGPCurrentRacePlayerIdByRank[rank];
+        gGPPointsByCharacterId[gPlayers[playerId].characterId] += gGPPointRewards[rank];
+    }
+}
+
+/**
+ * Raise the Driver's Points standings for an eighth-screen Grand Prix finish.
+ *
+ * func_80092564() is the wrong entry point: it adds MENU_ITEM_TYPE_0AC, which is
+ * the post-race RETRY / QUIT prompt. The actual standings list is MENU_ITEM_TYPE_0AB
+ * ("driver's points"), normally spawned by the 0AA results item after the winner-
+ * screen expand (func_8028E678). That expand has no eighth-screen arm, so we add
+ * 0AB ourselves, pre-award the points, and park the item in a stable display
+ * state that skips the native 1P/2P viewport slide.
+ */
+void show_8p_drivers_points(void) {
+    MenuItem* item;
+    s32 i;
+
+    award_8p_gp_points();
+
+    /* Totals already include this race; zero the remaining-to-count so the
+       list shows e.g. "09 +0" rather than double-counting the +N column. */
+    if (sGPPointsCopy != NULL) {
+        for (i = 0; i < (s32) ARRAY_COUNT(gGPPointRewards); i++) {
+            sGPPointsCopy[i] = 0;
+        }
+    }
+
+    add_menu_item(MENU_ITEM_TYPE_0AB, 0, 0, MENU_ITEM_PRIORITY_0);
+    item = find_menu_items_dupe(MENU_ITEM_TYPE_0AB);
+    if (item != NULL) {
+        /* state 0 is not drawn (func_800A34A8 requires state != 0). States 0–1
+           animate gScreenOneCtx / gScreenTwoCtx for the native 2-viewport
+           layout; jump past them. State 7 is the post-award wait in the
+           ceremony machine — freeze there via func_800AC458. */
+        item->state = 7;
+        item->column = 0;
+        item->row = 0;
+        item->param1 = 0;
+        item->param2 = 0;
+    }
+}
+
+/**
+ * Render and tick the Driver's Points standings during the eighth-screen finish
+ * hold. The racing loop only runs the "special" menu pass (pause / no-controller),
+ * so ordinary items like MENU_ITEM_TYPE_0AB are never drawn there. Same ortho
+ * setup as the in-race menu pass, but with the default pass so the standings
+ * item processes as it does in the ceremony.
+ */
+void handle_8p_results_menus(void) {
+    gSPViewport(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(D_802B8880));
+    AddEffectMatrixOrtho();
+    gSPDisplayList(gDisplayListHead++, D_02007F18);
+    gDPSetScissor(gDisplayListHead++, G_SC_NON_INTERLACE, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    /* Dim the live eighth-screen grid so the standings text is readable. The
+       native path gets a black half-viewport from the 1P→2P expand; we only
+       overlay, so provide an equivalent backdrop. */
+    gDisplayListHead = draw_box_wide(gDisplayListHead, 0, 0, SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1, 0, 0, 0, 0xA0);
+    handle_menus_default();
+    func_8009CA6C(SCREEN_FULLSCREEN_SLOT);
+    gMatrixEffectCount = 0;
 }
 
 void func_800925A0(void) {
@@ -6148,6 +6242,14 @@ void add_menu_item(s32 type, s32 column, s32 row, s8 priority) {
             load_menu_img_comp_type(D_800E8234[((type - MENU_ITEM_UI_1P_GAME) * 2) + 0],
                                     LOAD_MENU_IMG_TKMK00_ONCE);
             load_menu_img(D_800E8234[((type - MENU_ITEM_UI_1P_GAME) * 2) + 1]);
+            /* Also warm the five-to-eight headers; the 2P slot swaps to them at
+               runtime when the count is past four. */
+            if (type == MENU_ITEM_UI_2P_GAME) {
+                load_menu_img_comp_type(seg2_menu_5p_column, LOAD_MENU_IMG_TKMK00_ONCE);
+                load_menu_img_comp_type(seg2_menu_6p_column, LOAD_MENU_IMG_TKMK00_ONCE);
+                load_menu_img_comp_type(seg2_menu_7p_column, LOAD_MENU_IMG_TKMK00_ONCE);
+                load_menu_img_comp_type(seg2_menu_8p_column, LOAD_MENU_IMG_TKMK00_ONCE);
+            }
             break;
         case CHARACTER_SELECT_MENU_PLAYER_SELECT_BANNER:
             load_menu_img_comp_type(D_02004B4C, LOAD_MENU_IMG_TKMK00_ONCE);
@@ -6606,29 +6708,6 @@ void render_menus(MenuItem* arg0) {
                 var_a1 = arg0->type - MENU_ITEM_UI_1P_GAME;
                 func_800A8270(var_a1, arg0);
                 func_800A0FA4(arg0, var_a1);
-                /* Counts past four borrow the four-player icon, so the number
-                   itself has to be drawn or the picker looks stuck on 4P.
-
-                   Drawn through the menu's own text path -- the same one
-                   draw_version() uses a few cases above -- rather than
-                   print_str_num(). That prints through the debug text routines,
-                   which emit their own texture and render-mode commands without
-                   restoring what the menu had set; the count came out as a
-                   couple of grey boxes and every menu item drawn after it was
-                   corrupted.
-
-                   Placed in the gap between the banner and the icon row, which
-                   is clear at every player count, rather than following the
-                   icon: the icons slide in from off-screen and a label pinned to
-                   one would spend the transition outside the frame. */
-                if ((arg0->type == MENU_ITEM_UI_4P_GAME) && (gPlayerCount > 4)) {
-                    char countLabel[16];
-
-                    sprintf(countLabel, "%d PLAYERS", gPlayerCount);
-                    set_text_color(TEXT_GREEN);
-                    print_text1(SCREEN_WIDTH / 2 - (s32) ((f32) get_string_width(countLabel) * 0.25f), 62, countLabel,
-                                0, 0.5f, 0.5f, 0);
-                }
                 break;
             case MENU_ITEM_UI_OK:
                 func_800A8564(arg0);
@@ -7210,21 +7289,22 @@ void func_800A0EB8(UNUSED MenuItem* arg0, s32 arg1) {
 }
 
 void func_800A0FA4(MenuItem* arg0, s32 arg1) {
+    MenuTexture* column = main_menu_player_column(arg1);
+    MenuTexture* triangle = D_800E8234[(arg1 * 2) + 1];
+
     switch (arg0->state) {
         case 0:
         case 2:
         case 3:
-            gDisplayListHead = render_menu_textures(
-                 gDisplayListHead, D_800E8234[(arg1 * 2) + 0], arg0->column, arg0->row);
-            gDisplayListHead = render_menu_textures(
-                gDisplayListHead, D_800E8234[(arg1 * 2) + 1], arg0->column, arg0->row);
+            gDisplayListHead = render_menu_textures(gDisplayListHead, column, arg0->column, arg0->row);
+            gDisplayListHead = render_menu_textures(gDisplayListHead, triangle, arg0->column, arg0->row);
             break;
         case 1:
         case 4:
-            gDisplayListHead = func_8009BC9C(gDisplayListHead, D_800E8234[(arg1 * 2) + 0],
-                                             arg0->column, arg0->row, 2, arg0->param1);
-            gDisplayListHead = func_8009BC9C(gDisplayListHead, D_800E8234[(arg1 * 2) + 1],
-                                             arg0->column, arg0->row, 2, arg0->param1);
+            gDisplayListHead =
+                func_8009BC9C(gDisplayListHead, column, arg0->column, arg0->row, 2, arg0->param1);
+            gDisplayListHead =
+                func_8009BC9C(gDisplayListHead, triangle, arg0->column, arg0->row, 2, arg0->param1);
             break;
     }
 }
@@ -9704,6 +9784,11 @@ void func_800A8270(s32 index, MenuItem* arg1) {
     s32 var_s2;
     s32 var_s3;
     s32 var_s4;
+    /* Counts past four host on the 2P column (index 1): that art already has
+       Grand Prix / VS / Battle rows, and get_menu_item_player_count anchors the
+       CC boxes there. Mode-table reads use the live player count when selected. */
+    s32 isSelected = (gPlayerCount > 4) ? (index == 1) : ((index + 1) == gPlayerCount);
+    s32 modeTableIndex = isSelected ? (gPlayerCount - 1) : index;
 
     if (arg1->param1 < 32) {
         temp_t6 = (arg1->param1 << 6) / 64;
@@ -9716,7 +9801,7 @@ void func_800A8270(s32 index, MenuItem* arg1) {
         gDPSetRenderMode(gDisplayListHead++, G_RM_OPA_SURF, G_RM_OPA_SURF2);
         gDPSetCombineMode(gDisplayListHead++, G_CC_DECALRGBA, G_CC_DECALRGBA);
 
-        if ((index + 1) == gPlayerCount) {
+        if (isSelected) {
             if ((gMainMenuSelection == MAIN_MENU_OPTION) || (gMainMenuSelection == MAIN_MENU_DATA) ||
                 (gMainMenuSelection == MAIN_MENU_PLAYER_SELECT)) {
                 gDisplayListHead = draw_flash_select_case_slow(gDisplayListHead, var_s3, var_s0, var_s4, var_s0 + 53);
@@ -9728,8 +9813,8 @@ void func_800A8270(s32 index, MenuItem* arg1) {
             gDisplayListHead = func_80098FC8(gDisplayListHead, var_s3, var_s0, var_s4, var_s0 + 53);
         }
 
-        for (var_s0 += 65, var_s2 = 0; var_s2 <= gPlayerModeSelection[index]; var_s2++, var_s0 += 18) {
-            if ((var_s2 == gGameModeMenuColumn[index]) && ((index + 1) == gPlayerCount) && (gMainMenuSelection >= 4)) {
+        for (var_s0 += 65, var_s2 = 0; var_s2 <= gPlayerModeSelection[modeTableIndex]; var_s2++, var_s0 += 18) {
+            if ((var_s2 == gGameModeMenuColumn[modeTableIndex]) && isSelected && (gMainMenuSelection >= 4)) {
                 if (gMainMenuSelection == MAIN_MENU_MODE_SELECT) {
                     gDisplayListHead =
                         draw_flash_select_case_slow(gDisplayListHead, var_s3, var_s0, var_s4, var_s0 + 17);
@@ -10306,17 +10391,22 @@ void func_800A9B9C(MenuItem* arg0) {
 }
 
 void func_800A9C40(MenuItem* arg0) {
+    /* Counts above four host on the 2P column (GP/VS/Battle art + CC anchor).
+       Vanilla compared type == gPlayerCount + 0xA, which matches nothing once
+       the count exceeds four, so every icon faded and only the CC boxes remained. */
+    s32 selectedType = (gPlayerCount > 4) ? MENU_ITEM_UI_2P_GAME : (gPlayerCount + 0xA);
+
     switch (arg0->state) {
         case 0:
             func_800AA280(arg0);
-            if ((gPlayerCount + 0xA) == arg0->type) {
+            if (selectedType == arg0->type) {
                 arg0->state = 2;
             } else {
                 arg0->state = 1;
             }
             break;
         case 4:
-            if ((gPlayerCount + 0xA) == arg0->type) {
+            if (selectedType == arg0->type) {
                 arg0->state = 2;
                 arg0->param1 = 0;
                 break;
@@ -10337,7 +10427,7 @@ void func_800A9C40(MenuItem* arg0) {
             }
             break;
         case 3:
-            if ((gPlayerCount + 0xA) == arg0->type) {
+            if (selectedType == arg0->type) {
                 arg0->state = 2;
             }
             break;
@@ -10349,12 +10439,10 @@ void func_800A9C40(MenuItem* arg0) {
 
 void func_800A9D5C(MenuItem* arg0) {
     Unk_D_800E70A0* temp_v0;
-    /* The four icons are types 0xB through 0xE, so the selected one is the type
-       matching the count. There is no art past four players, so counts above it
-       keep the four-player icon lit and the real number is drawn beside it in
-       render_player_count_overlay(). Without this nothing at all is highlighted
-       once the picker passes four. */
-    s32 selectedType = (gPlayerCount > 4) ? MENU_ITEM_UI_4P_GAME : (gPlayerCount + 0xA);
+    /* The four icons are types 0xB through 0xE. Counts above four host on the
+       two-player column (Grand Prix / VS / Battle rows already exist there);
+       the live "N PLAYERS" label is drawn over it. */
+    s32 selectedType = (gPlayerCount > 4) ? MENU_ITEM_UI_2P_GAME : (gPlayerCount + 0xA);
 
     if (selectedType == arg0->type) {
         arg0->priority = 0x0A;
@@ -11591,6 +11679,13 @@ void func_800AC458(MenuItem* arg0) {
     s32 var_a1;
     s32 var_t1;
     s32 temp;
+
+    /* Eighth-screen hold parks this item at state 7 (see show_8p_drivers_points).
+       The native machine would next animate viewports and auto-advance the cup;
+       we freeze and let race_logic's RACE_EXIT arm wait for A/Start instead. */
+    if (gScreenModeSelection == SCREEN_MODE_8P && arg0->state == 7) {
+        return;
+    }
 
     switch (arg0->state) {
         case 0:

@@ -43,8 +43,8 @@ Mods are loaded in dependency order. If mod A depends on mod B, then B will be l
   * Some texture might not be possible to change yet, but most of them can be changed.
   * [link](textures-pack.md)
 * Custom Tracks (CT)
-  * Custom tracks are reserved for advanced users. Don't hesitate to make feedback and PR to improve the doc.
-  * [link](@ref trackmenu)
+  * Prefer the browser track editor under `tools/track-editor` for simple loops, ramps, and base-game textures ([Browser Track Editor](@ref editor)).
+  * Blender + fast64 remains available for advanced scenery ([Track Making](@ref trackmenu)).
 * Custom Characters
   * Custom characters can only replace existing characters for now. We plan to allow to add new characters in the future.
   * [link](@ref characteroverview)

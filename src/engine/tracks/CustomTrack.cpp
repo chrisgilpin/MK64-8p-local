@@ -193,9 +193,14 @@ void CustomTrack::ParseMeshForCollision(TrackSections* sections, size_t numMesh)
         }
 
         const char* name = ResourceGetNameByCrc(sections[i].crc);
-        printf("  %s\n", name);
-        generate_collision_mesh((Gfx*) ResourceGetDataByCrc(sections[i].crc), sections[i].surfaceType,
-                                sections[i].sectionId);
+        Gfx* gfx = (Gfx*) ResourceGetDataByCrc(sections[i].crc);
+        if (gfx == nullptr) {
+            printf("  [WARN] missing mesh for section %zu (crc %016llx name %s) — skip collision\n", i,
+                   (unsigned long long) sections[i].crc, name ? name : "(null)");
+            continue;
+        }
+        printf("  %s\n", name ? name : "(unnamed)");
+        generate_collision_mesh(gfx, sections[i].surfaceType, sections[i].sectionId);
     }
     printf("[Track] Collision Mesh Generation Complete!\n\n");
 }

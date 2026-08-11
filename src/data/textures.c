@@ -4229,22 +4229,61 @@ MenuTexture seg2_menu_2p_column[5] = {
 /**
  * @brief MenuTexture for the first colone three player
  *
+ * Same mode rows as two-player (Grand Prix / VS / Battle) so three- and
+ * four-player Grand Prix match the styled 1P/2P labels rather than plain text.
  */
-MenuTexture seg2_menu_3p_column[4] = {
+MenuTexture seg2_menu_3p_column[5] = {
     { 1, texture_menu_3p_game, 64, 54, 0, 0, 0x0 },
-    { 1, texture_mode_vs, 64, 18, 0, 65, 0x0 },
-    { 1, texture_mode_battle, 64, 18, 0, 83, 0x0 },
+    { 1, texture_mode_mario_gp, 64, 18, 0, 65, 0x0 },
+    { 1, texture_mode_vs, 64, 18, 0, 83, 0x0 },
+    { 1, texture_mode_battle, 64, 18, 0, 101, 0x0 },
     { 0, NULL, 0, 0, 0, 0, 0 },
 };
 
 /**
  * @brief MenuTexture for the first colone four player
  *
+ * Same mode rows as two-player (Grand Prix / VS / Battle); see 3p column.
  */
-MenuTexture seg2_menu_4p_column[4] = {
+MenuTexture seg2_menu_4p_column[5] = {
     { 1, texture_menu_4p_game, 64, 54, 0, 0, 0x0 },
-    { 1, texture_mode_vs, 64, 18, 0, 65, 0x0 },
-    { 1, texture_mode_battle, 64, 18, 0, 83, 0x0 },
+    { 1, texture_mode_mario_gp, 64, 18, 0, 65, 0x0 },
+    { 1, texture_mode_vs, 64, 18, 0, 83, 0x0 },
+    { 1, texture_mode_battle, 64, 18, 0, 101, 0x0 },
+    { 0, NULL, 0, 0, 0, 0, 0 },
+};
+
+/* Five-to-eight player header art (custom). Hosted on the 2P column slot at
+   runtime; mode rows match Grand Prix / VS / Battle. */
+MenuTexture seg2_menu_5p_column[5] = {
+    { 1, texture_menu_5p_game, 64, 54, 0, 0, 0x0 },
+    { 1, texture_mode_mario_gp, 64, 18, 0, 65, 0x0 },
+    { 1, texture_mode_vs, 64, 18, 0, 83, 0x0 },
+    { 1, texture_mode_battle, 64, 18, 0, 101, 0x0 },
+    { 0, NULL, 0, 0, 0, 0, 0 },
+};
+
+MenuTexture seg2_menu_6p_column[5] = {
+    { 1, texture_menu_6p_game, 64, 54, 0, 0, 0x0 },
+    { 1, texture_mode_mario_gp, 64, 18, 0, 65, 0x0 },
+    { 1, texture_mode_vs, 64, 18, 0, 83, 0x0 },
+    { 1, texture_mode_battle, 64, 18, 0, 101, 0x0 },
+    { 0, NULL, 0, 0, 0, 0, 0 },
+};
+
+MenuTexture seg2_menu_7p_column[5] = {
+    { 1, texture_menu_7p_game, 64, 54, 0, 0, 0x0 },
+    { 1, texture_mode_mario_gp, 64, 18, 0, 65, 0x0 },
+    { 1, texture_mode_vs, 64, 18, 0, 83, 0x0 },
+    { 1, texture_mode_battle, 64, 18, 0, 101, 0x0 },
+    { 0, NULL, 0, 0, 0, 0, 0 },
+};
+
+MenuTexture seg2_menu_8p_column[5] = {
+    { 1, texture_menu_8p_game, 64, 54, 0, 0, 0x0 },
+    { 1, texture_mode_mario_gp, 64, 18, 0, 65, 0x0 },
+    { 1, texture_mode_vs, 64, 18, 0, 83, 0x0 },
+    { 1, texture_mode_battle, 64, 18, 0, 101, 0x0 },
     { 0, NULL, 0, 0, 0, 0, 0 },
 };
 

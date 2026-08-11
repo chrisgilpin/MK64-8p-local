@@ -124,22 +124,22 @@ _Static_assert(ARRAY_COUNT(sScreenModePlayerTable) == NUM_SCREEN_MODE_ROWS,
 
 /* Highest row the game-mode column can move to, per player count -- so one less
    than the number of usable entries in that count's gGameModePlayerSelection
-   row. Counts five and up offer Grand Prix, VS and Battle, the same three as two
-   players, so they stop at row 2.
+   row. Two players and up all offer Grand Prix, VS and Battle (three rows), so
+   they stop at row 2. One player keeps Grand Prix / Time Trials (row 1).
 
    Sized rather than left open: the header declared it unsized, so the
    four-entry definition won and every count above four read past the end. */
-const s8 gPlayerModeSelection[NUM_PLAYERS] = { 1, 2, 1, 1, 2, 2, 2, 2 };
+const s8 gPlayerModeSelection[NUM_PLAYERS] = { 1, 2, 2, 2, 2, 2, 2, 2 };
 
 // Limit for each index column in one-two-three-four mode selection
 const s8 sGameModePlayerColumnDefault[][3] = {
     { 2, 1, 0 }, // 1p (GP options, TT options, ...)
     { 2, 2, 0 }, // 2p (GP options, VS options, Battle)
-    { 2, 0, 0 }, // 3p (VS options, Battle, ...)
-    { 2, 0, 0 }, // 4p (VS options, Battle, ...)
-    { 2, 2, 0 }, // 5p  mirrors 2p: the only vanilla row that offers Grand
-    { 2, 2, 0 }, // 6p  Prix alongside the multiplayer modes, and eight-player
-    { 2, 2, 0 }, // 7p  Grand Prix is the point of the eighth-screen mode
+    { 2, 2, 0 }, // 3p (GP options, VS options, Battle)
+    { 2, 2, 0 }, // 4p (GP options, VS options, Battle)
+    { 2, 2, 0 }, // 5p
+    { 2, 2, 0 }, // 6p
+    { 2, 2, 0 }, // 7p
     { 2, 2, 0 }, // 8p
 };
 
@@ -148,10 +148,10 @@ const s8 sGameModePlayerColumnDefault[][3] = {
 const s8 sGameModePlayerColumnExtra[][3] = {
     { 3, 1, 0 }, // 1p (GP options, TT options, ...)
     { 3, 3, 0 }, // 2p (GP options, VS options, Battle)
-    { 3, 0, 0 }, // 3p (VS options, Battle, ...)
-    { 3, 0, 0 }, // 4p (VS options, Battle, ...)
+    { 3, 3, 0 }, // 3p
+    { 3, 3, 0 }, // 4p
     { 3, 3, 0 }, // 5p
-    { 3, 3, 0 }, // 6p  as above, mirroring the 2p row
+    { 3, 3, 0 }, // 6p
     { 3, 3, 0 }, // 7p
     { 3, 3, 0 }, // 8p
 };
@@ -160,8 +160,8 @@ const s8 sGameModePlayerColumnExtra[][3] = {
 const s32 gGameModePlayerSelection[][3] = {
     { GRAND_PRIX, TIME_TRIALS, 0x00000000 }, // 1p game modes
     { GRAND_PRIX, VERSUS, BATTLE },          // 2p game modes
-    { VERSUS, BATTLE, 0x00000000 },          // 3p game modes
-    { VERSUS, BATTLE, 0x00000000 },          // 4p game modes
+    { GRAND_PRIX, VERSUS, BATTLE },          // 3p game modes
+    { GRAND_PRIX, VERSUS, BATTLE },          // 4p game modes
     { GRAND_PRIX, VERSUS, BATTLE },          // 5p game modes
     { GRAND_PRIX, VERSUS, BATTLE },          // 6p game modes
     { GRAND_PRIX, VERSUS, BATTLE },          // 7p game modes

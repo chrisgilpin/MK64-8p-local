@@ -67,6 +67,7 @@ std::unique_ptr<Cup> gMushroomCup;
 std::unique_ptr<Cup> gFlowerCup;
 std::unique_ptr<Cup> gStarCup;
 std::unique_ptr<Cup> gSpecialCup;
+std::unique_ptr<Cup> gGoodhouseCup;
 std::unique_ptr<Cup> gBattleCup;
 
 HarbourMastersIntro gMenuIntro;
@@ -130,6 +131,15 @@ void CustomEngineInit() {
         "mk:rainbow_road"
     });
 
+    /* Custom GP cup: four tracks from the goodhouse-cup mod
+       (mods/goodhouse-cup.o2r). IDs must match scene.json ResourceName. */
+    gGoodhouseCup = std::make_unique<Cup>("goodhouse:goodhouse_cup", "goodhouse", std::vector<std::string>{
+        "goodhouse:track1",
+        "goodhouse:track2",
+        "goodhouse:track3",
+        "goodhouse:track4",
+    });
+
     gBattleCup = std::make_unique<Cup>("mk:battle_cup", "Battle Cup", std::vector<std::string>{
         "mk:big_donut", 
         "mk:block_fort", 
@@ -142,13 +152,21 @@ void CustomEngineInit() {
     gFlowerCup->ValidateTrackIds(gTrackRegistry);
     gStarCup->ValidateTrackIds(gTrackRegistry);
     gSpecialCup->ValidateTrackIds(gTrackRegistry);
+    try {
+        gGoodhouseCup->ValidateTrackIds(gTrackRegistry);
+    } catch (const std::exception& e) {
+        /* Mod missing or tracks failed to load — still register the cup so
+           the list stays stable; selection will error until the mod is present. */
+        printf("[Game] goodhouse cup track validation: %s\n", e.what());
+    }
     gBattleCup->ValidateTrackIds(gTrackRegistry);
 
-    /* Instantiate Cups */
+    /* Instantiate Cups (battle must stay last — NextCup skips it for GP/VS/TT) */
     GetWorld()->AddCup(gMushroomCup.get());
     GetWorld()->AddCup(gFlowerCup.get());
     GetWorld()->AddCup(gStarCup.get());
     GetWorld()->AddCup(gSpecialCup.get());
+    GetWorld()->AddCup(gGoodhouseCup.get());
     GetWorld()->AddCup(gBattleCup.get());
 
     SetMarioRaceway();
@@ -927,6 +945,10 @@ void* GetStarCup(void) {
 
 void* GetSpecialCup(void) {
     return gSpecialCup.get();
+}
+
+void* GetGoodhouseCup(void) {
+    return gGoodhouseCup.get();
 }
 
 void* GetBattleCup(void) {

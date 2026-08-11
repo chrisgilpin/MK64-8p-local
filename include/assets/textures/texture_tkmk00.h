@@ -83,6 +83,14 @@ static const ALIGN_ASSET(2) char texture_menu_3p_game[] = "__OTR__textures/textu
 
 static const ALIGN_ASSET(2) char texture_menu_4p_game[] = "__OTR__textures/texture_tkmk00/texture_menu_4p_game";
 
+static const ALIGN_ASSET(2) char texture_menu_5p_game[] = "__OTR__textures/texture_tkmk00/texture_menu_5p_game";
+
+static const ALIGN_ASSET(2) char texture_menu_6p_game[] = "__OTR__textures/texture_tkmk00/texture_menu_6p_game";
+
+static const ALIGN_ASSET(2) char texture_menu_7p_game[] = "__OTR__textures/texture_tkmk00/texture_menu_7p_game";
+
+static const ALIGN_ASSET(2) char texture_menu_8p_game[] = "__OTR__textures/texture_tkmk00/texture_menu_8p_game";
+
 static const ALIGN_ASSET(2) char texture_mode_battle[] = "__OTR__textures/texture_tkmk00/texture_mode_battle";
 
 static const ALIGN_ASSET(2) char texture_mode_time_trials[] = "__OTR__textures/texture_tkmk00/texture_mode_time_trials";

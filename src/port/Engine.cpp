@@ -808,6 +808,42 @@ extern "C" uint8_t PortAutoStartRaceKeyPressed(void) {
     return pressed ? 1 : 0;
 }
 
+/**
+ * Edge-detected state of the number keys 1..8, one bit each.
+ *
+ * Bit i (0-based) is set when the key for player i+1 was pressed *this* frame
+ * (a rising edge, not a hold). The game side uses it to hand player i's kart to
+ * the AI, or take it back -- a keyboard "referee" control for eight-player runs.
+ * Mirrors PortAutoStartRaceKeyPressed, but latches eight keys independently.
+ */
+extern "C" uint8_t PortPlayerCpuToggleKeysPressed(void) {
+    static bool sPrevDown[8] = { false, false, false, false, false, false, false, false };
+    uint8_t pressedMask = 0;
+
+    auto window = GameEngine::Instance->context->GetWindow();
+    auto backend = window->GetWindowBackend();
+    if (backend == Fast::WindowBackend::FAST3D_SDL_OPENGL || backend == Fast::WindowBackend::FAST3D_SDL_METAL) {
+        const uint8_t* keys = SDL_GetKeyboardState(nullptr);
+        if (keys != nullptr) {
+            // SDL scancodes for the digits are contiguous: SDL_SCANCODE_1 .. _8.
+            for (int i = 0; i < 8; i++) {
+                bool down = keys[SDL_SCANCODE_1 + i] != 0;
+                if (down && !sPrevDown[i]) {
+                    pressedMask |= (uint8_t) (1u << i);
+                }
+                sPrevDown[i] = down;
+            }
+            return pressedMask;
+        }
+    }
+
+    // No keyboard this backend/frame: drop any held state so nothing latches.
+    for (int i = 0; i < 8; i++) {
+        sPrevDown[i] = false;
+    }
+    return 0;
+}
+
 extern "C" int16_t OTRGetRectDimensionFromLeftEdge(float v) {
     return ((int) floorf(OTRGetDimensionFromLeftEdge(v)));
 }
