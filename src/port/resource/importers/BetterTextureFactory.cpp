@@ -19,6 +19,7 @@ std::shared_ptr<Ship::IResource> loadPngTexture(std::shared_ptr<Ship::File> file
     texture->Type = Fast::TextureType::RGBA32bpp;
     texture->ImageDataSize = texture->Width * texture->Height * 4;
     texture->Flags = TEX_FLAG_LOAD_AS_IMG;
+    Fast::RegisterTextureBuffer(texture->ImageData, texture->ImageDataSize);
     return texture;
 }
 
@@ -50,6 +51,10 @@ ResourceFactoryBinaryTextureV0::ReadResource(std::shared_ptr<Ship::File> file,
     texture->ImageData = new uint8_t[texture->ImageDataSize];
 
     reader->Read((char*)texture->ImageData, texture->ImageDataSize);
+
+    // Record the buffer extent so a raw-pointer draw of this texture can be
+    // bounded to its real length even without the resource handle.
+    Fast::RegisterTextureBuffer(texture->ImageData, texture->ImageDataSize);
 
     return texture;
 }
@@ -83,6 +88,10 @@ ResourceFactoryBinaryTextureV1::ReadResource(std::shared_ptr<Ship::File> file,
     texture->ImageData = new uint8_t[texture->ImageDataSize];
 
     reader->Read((char*)texture->ImageData, texture->ImageDataSize);
+
+    // Record the buffer extent so a raw-pointer draw of this texture can be
+    // bounded to its real length even without the resource handle.
+    Fast::RegisterTextureBuffer(texture->ImageData, texture->ImageDataSize);
 
     return texture;
 }
