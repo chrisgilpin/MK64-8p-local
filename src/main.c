@@ -40,6 +40,7 @@
 #include "port/Game.h"
 #include "port/Engine.h"
 #include "engine/Matrix.h"
+#include <screen_grid.h>
 
 // Declarations (not in this file)
 void func_80091B78(void);
@@ -832,16 +833,28 @@ void race_logic_loop(void) {
 
                gPlayerWinningIndex is -1 or out of range until someone wins, in
                which case no screen is special and plain order is correct. */
-            for (s32 i = PLAYER_ONE; i < NUM_PLAYERS; i++) {
-                if (i == gPlayerWinningIndex) {
-                    continue;
+            {
+                s32 humans = gPlayerCount;
+
+                if (humans > NUM_PLAYERS) {
+                    humans = NUM_PLAYERS;
                 }
-                render_screens(&gScreenContexts[i], RENDER_SCREEN_MODE_8P_PLAYER_ONE + i, SCREEN_ID_TABLE_8P_BASE + i, i);
-            }
-            if ((gPlayerWinningIndex >= PLAYER_ONE) && (gPlayerWinningIndex < NUM_PLAYERS)) {
-                render_screens(&gScreenContexts[gPlayerWinningIndex],
-                               RENDER_SCREEN_MODE_8P_PLAYER_ONE + gPlayerWinningIndex, SCREEN_ID_TABLE_8P_BASE + gPlayerWinningIndex,
-                               gPlayerWinningIndex);
+                if (humans < 1) {
+                    humans = 1;
+                }
+
+                for (s32 i = PLAYER_ONE; i < humans; i++) {
+                    if (i == gPlayerWinningIndex) {
+                        continue;
+                    }
+                    render_screens(&gScreenContexts[i], RENDER_SCREEN_MODE_8P_PLAYER_ONE + i,
+                                   SCREEN_ID_TABLE_8P_BASE + i, i);
+                }
+                if ((gPlayerWinningIndex >= PLAYER_ONE) && (gPlayerWinningIndex < humans)) {
+                    render_screens(&gScreenContexts[gPlayerWinningIndex],
+                                   RENDER_SCREEN_MODE_8P_PLAYER_ONE + gPlayerWinningIndex,
+                                   SCREEN_ID_TABLE_8P_BASE + gPlayerWinningIndex, gPlayerWinningIndex);
+                }
             }
             break;
     }
