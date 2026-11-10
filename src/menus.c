@@ -1114,6 +1114,13 @@ void debug_auto_start_race(void) {
         cc = CC_EXTRA;
     }
 
+    /* CC 0 is the 400cc menu slot. Race code reads gCCSelection as 150cc and
+       gUse400cc for the faster speeds. */
+    gUse400cc = (cc == CC_50) ? 1 : 0;
+    if (gUse400cc) {
+        cc = CC_150;
+    }
+
     gScreenModeListIndex = sScreenModeIdxFromPlayerMode[players - 1];
     gScreenModeSelection = sScreenModePlayerTable[gScreenModeListIndex];
     gPlayerCountSelection1 = gPlayerCount = players;
@@ -1213,10 +1220,12 @@ void splash_menu_act(struct Controller* controller, u16 controllerIdx) {
             case DEBUG_MENU_CC: {
                 if ((btnAndStick & R_JPAD) && (gCCSelection < 3)) {
                     gCCSelection += 1;
+                    gUse400cc = 0;
                     play_sound2(SOUND_MENU_CURSOR_MOVE);
                 }
                 if ((btnAndStick & L_JPAD) && (gCCSelection > 0)) {
                     gCCSelection -= 1;
+                    gUse400cc = 0;
                     play_sound2(SOUND_MENU_CURSOR_MOVE);
                 }
                 if (btnAndStick & U_JPAD) {
@@ -1397,20 +1406,21 @@ void setup_game_mode_selected(void) {
     // Determine which game mode was selected based on the number of players and the row selected on the main menu
     switch (gGameModePlayerSelection[gPlayerCount - 1][gGameModeMenuColumn[gPlayerCount - 1]]) {
         case GRAND_PRIX:
-            gCCSelection = subMenuMode;
-            gPlaceItemBoxes = 1;
-            set_mirror_mode((subMenuMode == CC_EXTRA) ? 1 : 0);
-            break;
         case VERSUS:
-            gCCSelection = subMenuMode;
+            /* The top row of the CC list used to be 50cc. It is 400cc now: same
+               hazards and handling as 150cc, with kart and CPU speeds scaled up. */
+            gUse400cc = (subMenuMode == CC_50) ? 1 : 0;
+            gCCSelection = gUse400cc ? CC_150 : subMenuMode;
             gPlaceItemBoxes = 1;
-            set_mirror_mode((subMenuMode == CC_EXTRA) ? 1 : 0);
+            set_mirror_mode((gUse400cc == 0 && subMenuMode == CC_EXTRA) ? 1 : 0);
             break;
         case BATTLE:
+            gUse400cc = 0;
             gPlaceItemBoxes = 1;
             set_mirror_mode(0);
             break;
         case TIME_TRIALS:
+            gUse400cc = 0;
             gCCSelection = CC_100;
             set_mirror_mode(0);
             gPlaceItemBoxes = 0;
@@ -1910,7 +1920,9 @@ void course_select_menu_act(struct Controller* controller, u16 controllerIdx) {
                 }
 
                 D_800DC540 = GetCupIndex();
-                gCurrentCourseId = gCupCourseOrder[gCupSelection][gCourseIndexInCup];
+                if (GetCupCourseId(GetCupCursorPosition()) >= 0) {
+                    gCurrentCourseId = (s16) GetCupCourseId(GetCupCursorPosition());
+                }
                 TrackBrowser_SetTrackFromCup();
                 if ((btnAndStick & B_BUTTON) != 0) {
                     func_8009E208();
@@ -1924,7 +1936,9 @@ void course_select_menu_act(struct Controller* controller, u16 controllerIdx) {
                         play_sound2(SOUND_MENU_SELECT);
                         SetCupCursorPosition(TRACK_ONE);
                         TrackBrowser_SetTrackFromCup();
-                        gCurrentCourseId = gCupCourseOrder[gCupSelection][TRACK_ONE];
+                        if (GetCupCourseId(TRACK_ONE) >= 0) {
+                            gCurrentCourseId = (s16) GetCupCourseId(TRACK_ONE);
+                        }
                         gMenuTimingCounter = 0;
                     }
                     reset_cycle_flash_menu();
@@ -1945,7 +1959,9 @@ void course_select_menu_act(struct Controller* controller, u16 controllerIdx) {
                     play_sound2(SOUND_MENU_CURSOR_MOVE);
                 }
 
-                gCurrentCourseId = gCupCourseOrder[gCupSelection][gCourseIndexInCup];
+                if (GetCupCourseId(GetCupCursorPosition()) >= 0) {
+                    gCurrentCourseId = (s16) GetCupCourseId(GetCupCursorPosition());
+                }
                 TrackBrowser_SetTrackFromCup();
                 if ((btnAndStick & B_BUTTON) != 0) {
                     if (gSubMenuSelection == SUB_MENU_MAP_SELECT_COURSE) {
@@ -2162,9 +2178,9 @@ void load_menu_states(s32 menuSelection) {
         case COURSE_SELECT_MENU: {
             if (gModeSelection == BATTLE) {
                 CM_SetCup(GetBattleCup());
-                // gCupSelection = BATTLE_CUP;
-                D_800DC540 = 4;
-                CM_SetCupIndex(BATTLE_CUP);
+                /* Battle is no longer cup index 4. ANDYS FAVES and goodhouse
+                   sit ahead of it, and SetCurrentCup records the real index. */
+                D_800DC540 = (s32) GetCupIndex();
                 gSubMenuSelection = SUB_MENU_MAP_SELECT_BATTLE_COURSE;
             } else {
                 if (GetCup() == GetBattleCup()) {

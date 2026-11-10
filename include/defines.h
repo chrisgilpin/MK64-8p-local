@@ -166,7 +166,7 @@ enum PlayerId {
  * Generally, the main determiner of horsepower output.
  */
 
-#define CC_50 0
+#define CC_50 0 /* Menu row reused as 400cc. See gUse400cc. */
 #define CC_100 1
 #define CC_150 2
 #define CC_EXTRA 3

@@ -358,9 +358,10 @@ char* gCupNames[] = {
     "flower cup",
     "star cup",
     "special cup",
+    "ANDYS FAVES",
     "goodhouse",
     "battle",
-    // legacy / padding (some old tables index past the live cup list)
+    /* Padding. Some screens index past the live cup list. */
     "mushroom cup",
     "flower cup",
     "star cup",
@@ -394,25 +395,72 @@ char* D_800E76A8[] = {
 };
 
 char* D_800E76CC[] = {
-    "50(",
+    "400(",
     "100(",
     "150(",
     "extra",
 };
 
 char* D_800E76DC[] = {
-    "50(",
+    "400(",
     "100(",
     "150(",
     "extra",
 };
 
 char* gDebugCCModeNames[] = {
-    "50CC",
+    "400CC",
     "100CC",
     "150CC",
     "EXTRA",
 };
+
+/* gCCSelection stays on CC_150 for a 400cc race, so screens that look the
+   class up by that index need this instead of the raw table. */
+static char* get_cc_label(void) {
+    if (gUse400cc) {
+        return D_800E76CC[CC_50];
+    }
+    if ((gCCSelection >= CC_50) && (gCCSelection <= CC_EXTRA)) {
+        return D_800E76CC[gCCSelection];
+    }
+    return D_800E76CC[CC_150];
+}
+
+/* The old 50cc graphic is a baked texture. Draw the class as text in that box. */
+static void draw_400cc_label(s32 column, s32 row) {
+    set_text_color(TEXT_BLUE);
+    print_text1_center_mode_1(column + 32, row + 0x10, "400(", 0, 0.65f, 0.75f);
+}
+
+/* Vanilla cups have baked name plates. Later cups (ANDYS FAVES, goodhouse)
+   do not, so draw the cup title and the four track names into the name boxes. */
+static void draw_custom_cup_course_list(void) {
+    s32 slot;
+    s32 cursor;
+    char line[48];
+    const char* trackName;
+
+    if ((gModeSelection == BATTLE) || (GetCupIndex() <= SPECIAL_CUP)) {
+        return;
+    }
+
+    set_text_color(TEXT_BLUE_GREEN_RED_CYCLE_1);
+    print_text1_center_mode_1(0xA0, 0x58, (char*) GetCupName(), 0, 0.7f, 0.7f);
+
+    cursor = GetCupCursorPosition();
+    for (slot = 0; slot < 4; slot++) {
+        gDisplayListHead = draw_box_fill(gDisplayListHead, D_800E7208[slot][0].column, D_800E7208[slot][0].row,
+                                          D_800E7208[slot][1].column, D_800E7208[slot][1].row, 1, 1, 1, 255);
+        trackName = GetCupTrackName(slot);
+        if ((trackName == NULL) || (trackName[0] == '\0')) {
+            continue;
+        }
+        snprintf(line, sizeof(line), "%d %s", slot + 1, trackName);
+        set_text_color((slot == cursor) ? TEXT_RED : TEXT_BLUE);
+        print_text_mode_1(D_800E7208[slot][0].column + 4, D_800E7208[slot][0].row + 0x0D, line, 0, 0.45f, 0.55f);
+    }
+}
 
 /* Indexed by gScreenModeListIndex and handed straight to a string printer, so
    it must have a row for every index the picker can reach. It ends up one entry
@@ -1496,7 +1544,12 @@ void func_80091B78(void) {
     func_800AF9B0();
     unref_D_8018EE0C = 0;
 
-    for (i = 0; i < 5; i++) {
+    /* One slot per viewport, plus the fullscreen fade at
+       SCREEN_FULLSCREEN_SLOT. A bound of 5 matched four viewports and the
+       sentinel when that sentinel was index 4. It now leaves the fade that
+       covers the "did not place" retry prompt set, and the reloaded race
+       draws that fade as a solid black screen while the music plays. */
+    for (i = 0; i < SCREEN_SLOT_COUNT; i++) {
         gTransitionType[i] = 0;
     }
 
@@ -1592,7 +1645,8 @@ void func_80091FA4(void) {
     sTKMK00_LowResBuffer = (u8*) get_next_available_memory_addr(0x00001000);
     sGPPointsCopy = get_next_available_memory_addr(4);
 
-    for (i = 0; i < 5; i++) {
+    /* See func_80091B78: the fullscreen fade lives past index 4. */
+    for (i = 0; i < SCREEN_SLOT_COUNT; i++) {
         gTransitionType[i] = 0;
     }
 
@@ -2610,7 +2664,8 @@ void func_80093E60(void) {
     sTKMK00_LowResBuffer = get_next_available_memory_addr(0x00001000);
     sGPPointsCopy = get_next_available_memory_addr(4U);
 
-    for (i = 0; i < 5; i++) {
+    /* See func_80091B78: the fullscreen fade lives past index 4. */
+    for (i = 0; i < SCREEN_SLOT_COUNT; i++) {
         gTransitionType[i] = 0;
     }
 
@@ -3011,7 +3066,7 @@ void func_80095574(void) {
         debug_print_str2(var_v0 + 0xB9, 0x0000006E, TrackBrowser_GetTrackDebugName());
 
         debug_print_str2(80, 120, "cc_mode");
-        debug_print_str2(170, 120, gDebugCCModeNames[gCCSelection]);
+        debug_print_str2(170, 120, gUse400cc ? "400CC" : gDebugCCModeNames[gCCSelection]);
 
         debug_print_str2(80, 130, "screen_mode");
         debug_print_str2(170, 130, gDebugScreenModeNames[gScreenModeListIndex]);
@@ -6796,7 +6851,11 @@ void render_menus(MenuItem* arg0) {
                     gDisplayListHead = draw_box_fill(gDisplayListHead, arg0->column, arg0->row, arg0->column + 0x3F,
                                                      arg0->row + 0x11, 1, 1, 1, 0x000000FF);
                 }
-                gDisplayListHead = render_menu_textures(gDisplayListHead, sp9C, arg0->column, arg0->row);
+                if (arg0->type == MAIN_MENU_50CC) {
+                    draw_400cc_label(arg0->column, arg0->row);
+                } else {
+                    gDisplayListHead = render_menu_textures(gDisplayListHead, sp9C, arg0->column, arg0->row);
+                }
                 break;
             case MENU_ITEM_TYPE_01B:
                 func_800A10CC(arg0);
@@ -6870,6 +6929,7 @@ void render_menus(MenuItem* arg0) {
                     gDisplayListHead,
                      gMenuTexturesTrackSelection[arg0->type - COURSE_SELECT_MAP_SELECT],
                     arg0->column, arg0->row);
+                draw_custom_cup_course_list();
                 break;
             case MENU_ITEM_TYPE_05F:
             case MENU_ITEM_TYPE_060:
@@ -6917,8 +6977,12 @@ void render_menus(MenuItem* arg0) {
             case MENU_ITEM_TYPE_068:
                 gDisplayListHead = draw_box_fill(gDisplayListHead, arg0->column, arg0->row, arg0->column + 0x3F,
                                                  arg0->row + 0x11, 1, 1, 1, 0x000000FF);
-                gDisplayListHead = render_menu_textures(
-                     gDisplayListHead, D_800E8294[gCCSelection], arg0->column, arg0->row);
+                if (gUse400cc) {
+                    draw_400cc_label(arg0->column, arg0->row);
+                } else {
+                    gDisplayListHead = render_menu_textures(
+                         gDisplayListHead, D_800E8294[gCCSelection], arg0->column, arg0->row);
+                }
                 break;
             case MENU_ITEM_TYPE_069:
                 func_800A8F48(arg0);
@@ -7936,11 +8000,10 @@ void func_800A2EB8(MenuItem* arg0) {
     temp_s0 = (s32) (((f32) (get_string_width(GetCupName()) + 8) * 0.6f) /
                      2); //  gCupNames[GetCupIndex()]) + 8) * 0.6f) / 2);
     print_text1_center_mode_1(
-        (-(s32) (((f32) (get_string_width(D_800E76CC[gCCSelection]) + 8) * 0.6f) / 2) - arg0->column) + 0xF5,
+        (-(s32) (((f32) (get_string_width(get_cc_label()) + 8) * 0.6f) / 2) - arg0->column) + 0xF5,
         arg0->row + 0xE1, gCupNames[D_800DC540], 0, 0.6f, 0.6f);
     print_text1_center_mode_1(
-        (temp_s0 - arg0->column) + 0xF5, arg0->row + 0xE1,
-        D_800E76CC[gGameModeSubMenuColumn[gPlayerCount - 1][gGameModeMenuColumn[gPlayerCount - 1]]], 0, 0.6f, 0.6f);
+        (temp_s0 - arg0->column) + 0xF5, arg0->row + 0xE1, get_cc_label(), 0, 0.6f, 0.6f);
 }
 
 void func_800A32B4(s32 arg0, s32 arg1, s32 characterId, s32 rank) {
@@ -8054,11 +8117,10 @@ void func_800A34A8(MenuItem* arg0) {
         set_text_color(TEXT_BLUE_GREEN_RED_CYCLE_2);
         temp_s0_3 = ((get_string_width(gCupNames[GetCupIndex()]) + 8) * 0.6f) / 2;
         print_text1_center_mode_1(
-            (-(s32) (((get_string_width(D_800E76CC[gCCSelection]) + 8) * 0.6f) / 2) - arg0->column) + 0xE6,
+            (-(s32) (((get_string_width(get_cc_label()) + 8) * 0.6f) / 2) - arg0->column) + 0xE6,
             arg0->row + 0xE1, gCupNames[D_800DC540], 0, 0.6f, 0.6f);
         print_text1_center_mode_1(
-            (temp_s0_3 - arg0->column) + 0xE6, arg0->row + 0xE1,
-            D_800E76CC[gGameModeSubMenuColumn[gPlayerCount - 1][gGameModeMenuColumn[gPlayerCount - 1]]], 0, 0.6f, 0.6f);
+            (temp_s0_3 - arg0->column) + 0xE6, arg0->row + 0xE1, get_cc_label(), 0, 0.6f, 0.6f);
     }
 }
 
@@ -8595,11 +8657,11 @@ void render_pause_grand_prix(MenuItem* arg0) {
 
     temp_s3 = &D_800E85C0[(gScreenModeSelection * 4) + (gIsGamePaused - 1)];
     temp_s0 = ((get_string_width(gCupNames[GetCupIndex()]) * one) + 10.0f) / 2;
-    temp_s1 = ((get_string_width(D_800E76CC[gCCSelection]) * one) + 10.0f) / 2;
+    temp_s1 = ((get_string_width(get_cc_label()) * one) + 10.0f) / 2;
     set_text_color(TEXT_YELLOW);
     print_text1_center_mode_1(160 - temp_s1, temp_s3->row - 50, gCupNames[GetCupIndex()], 0, 1.0f, 1.0f);
     set_text_color(TEXT_YELLOW);
-    print_text1_center_mode_1(160 + temp_s0, temp_s3->row - 50, D_800E76CC[gCCSelection], 0, 1.0f, 1.0f);
+    print_text1_center_mode_1(160 + temp_s0, temp_s3->row - 50, get_cc_label(), 0, 1.0f, 1.0f);
     set_text_color(TEXT_YELLOW);
     print_text1_center_mode_1(160, temp_s3->row - 30, CM_GetProps()->Name, 0, 1.0f, 1.0f);
     for (var_s0 = 0; var_s0 < 2; var_s0++) {
@@ -9199,12 +9261,12 @@ void func_800A7258(MenuItem* arg0) {
 void func_800A72FC(MenuItem* arg0) {
     UNUSED s32 pad;
     s32 cupNameLength = (((f32) get_string_width(GetCupName()) * 1) + 10) / 2;
-    s32 ccNameLength = (((f32) get_string_width(D_800E76CC[gCCSelection]) * 1) + 10) / 2;
+    s32 ccNameLength = (((f32) get_string_width(get_cc_label()) * 1) + 10) / 2;
 
     set_text_color(TEXT_YELLOW);
     print_text1_center_mode_1(arg0->column - ccNameLength, arg0->row, GetCupName(), 0, 1, 1);
     set_text_color(TEXT_YELLOW);
-    print_text1_center_mode_1(arg0->column + cupNameLength, arg0->row, D_800E76DC[gCCSelection], 0, 1, 1);
+    print_text1_center_mode_1(arg0->column + cupNameLength, arg0->row, get_cc_label(), 0, 1, 1);
 }
 
 void func_800A7448(MenuItem* arg0) {
@@ -11247,10 +11309,19 @@ void func_800AB260(MenuItem* arg0) {
 }
 
 void func_800AB290(MenuItem* arg0) {
-    if (arg0->param1 != GetCupIndex()) {
-        arg0->param1 = GetCupIndex();
-        func_8009A594(arg0->D_8018DEE0_index, 0,
-                      D_800E7E34[gCupCourseOrder[GetCupIndex()][arg0->type - 0x5F]]);
+    s32 courseId;
+    s32 slot;
+
+    if (arg0->param1 == (s32) GetCupIndex()) {
+        return;
+    }
+    arg0->param1 = (s32) GetCupIndex();
+    slot = arg0->type - 0x5F;
+    courseId = GetCupCourseId(slot);
+    /* Mod tracks have no stock preview. Skip them instead of reading off
+       gCupCourseOrder, which only covers the four vanilla cups plus battle. */
+    if ((courseId >= 0) && (courseId < ARRAY_COUNT(D_800E7E34))) {
+        func_8009A594(arg0->D_8018DEE0_index, 0, D_800E7E34[courseId]);
     }
 }
 

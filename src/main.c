@@ -211,6 +211,10 @@ s32 gModeSelection = GRAND_PRIX;
 s32 D_800DC540 = 0;
 s32 D_800DC544 = 0;
 s32 gCCSelection = CC_150;
+/* Set when the 400cc menu slot (the old 50cc row) is the class for this race.
+   gCCSelection itself stays on CC_150 so hazards, vehicles and handling match
+   the fast class; kart and CPU speeds are scaled up from there. */
+s32 gUse400cc = 0;
 s32 gGlobalTimer = 0;
 UNUSED s32 D_800DC550 = 0;
 UNUSED s32 D_800DC554 = 0;

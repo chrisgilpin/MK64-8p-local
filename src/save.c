@@ -251,6 +251,10 @@ u32 func_800B4DF4(u8* arr) {
 
 // Get a time trial record, infer track index
 s32 func_800B4E24(s32 recordIndex) {
+    /* cupRecords only has the four vanilla cups. A later cup must not read past it. */
+    if (GetCupIndex() >= 4) {
+        return 0;
+    }
     return func_800B4DF4(gSaveData.allCourseTimeTrialRecords.cupRecords[GetCupIndex()]
                              .courseRecords[GetCupCursorPosition()]
                              .records[recordIndex]);
@@ -258,6 +262,9 @@ s32 func_800B4E24(s32 recordIndex) {
 
 // Get a time trial record, but take the track index as an argument
 u32 func_800B4EB4(s32 recordIndex, s32 trackIndex) {
+    if ((trackIndex < 0) || (trackIndex >= 16)) {
+        return 0;
+    }
     return func_800B4DF4(gSaveData.allCourseTimeTrialRecords.cupRecords[(trackIndex / 4)]
                              .courseRecords[(trackIndex % 4)]
                              .records[recordIndex]);
@@ -265,6 +272,9 @@ u32 func_800B4EB4(s32 recordIndex, s32 trackIndex) {
 
 // Get Best Lap record of the inferred track index
 s32 func_800B4F2C(void) {
+    if (GetCupIndex() >= 4) {
+        return 0;
+    }
     return func_800B4DF4(gSaveData.allCourseTimeTrialRecords.cupRecords[GetCupIndex()]
                              .courseRecords[GetCupCursorPosition()]
                              .records[TIME_TRIAL_1LAP_RECORD]);
@@ -272,6 +282,9 @@ s32 func_800B4F2C(void) {
 
 // Get the best single lap time record of the given track index
 s32 func_800B4FB0(s32 trackIndex) {
+    if ((trackIndex < 0) || (trackIndex >= 16)) {
+        return 0;
+    }
     return func_800B4DF4(gSaveData.allCourseTimeTrialRecords.cupRecords[(trackIndex / 4)]
                              .courseRecords[(trackIndex % 4)]
                              .records[TIME_TRIAL_1LAP_RECORD]);
@@ -284,6 +297,9 @@ s32 func_800B5020(u32 time, s32 charId) {
     s32 j;
     CourseTimeTrialRecords* tt;
 
+    if (GetCupIndex() >= 4) {
+        return -1;
+    }
     track = GetCupIndex() * 4 + GetCupCursorPosition();
     tt = &gSaveData.allCourseTimeTrialRecords.cupRecords[track / 4].courseRecords[track % 4];
 
@@ -331,6 +347,9 @@ s32 func_800B5218(void) {
     s32 checkLapIndex;
     s32 character;
     s32 lapBitmask;
+    if (GetCupIndex() >= 4) {
+        return 0;
+    }
     recordIndex = (GetCupIndex() * 4) + GetCupCursorPosition();
     recordPointer =
         &gSaveData.allCourseTimeTrialRecords.cupRecords[recordIndex / 4].courseRecords[recordIndex % 4].records[0][0];
@@ -366,6 +385,10 @@ void func_800B536C(s32 arg0) {
     u8 tmp;
     s32 tmp2;
 
+    /* Trophy bits are two per cup inside one byte. Cups past Special have no slot. */
+    if (GetCupIndex() >= 4) {
+        return;
+    }
     if (arg0 >= 0) {
         points = &gSaveData.main.saveInfo.grandPrixPoints[gCCSelection];
         tmp = func_800B54EC(GetCupIndex(), *points);

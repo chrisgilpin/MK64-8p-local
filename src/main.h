@@ -219,6 +219,7 @@ extern s32 gModeSelection;
 extern s32 D_800DC540;
 extern s32 D_800DC544;
 extern s32 gCCSelection;
+extern s32 gUse400cc;
 extern s32 gGlobalTimer;
 extern u16 sRenderedFramebuffer;
 extern u16 sRenderingFramebuffer;

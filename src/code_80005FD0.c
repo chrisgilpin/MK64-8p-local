@@ -1608,6 +1608,26 @@ void update_player_timer_sound(s32 playerId, UNUSED Player* unused) {
     }
 }
 
+/* 400cc and the custom-CC slider share the 50cc→150cc line. 400cc wins.
+   With neither set, this is the table entry the caller used to read directly. */
+static f32 cpu_speed_for_cc(f32* speeds) {
+    f32 cc;
+    f32 a;
+    f32 b;
+
+    if (gUse400cc) {
+        cc = 400.0f;
+    } else if (CVarGetInteger("gEnableCustomCC", 0) == 1) {
+        cc = CVarGetFloat("gCustomCC", 150.0f);
+    } else {
+        return speeds[gCCSelection];
+    }
+
+    a = (speeds[CC_150] - speeds[CC_50]) / 100.0f;
+    b = speeds[CC_50] - (a * 50.0f);
+    return (a * cc) + b;
+}
+
 void update_player(s32 playerId) {
     UNUSED s32 pad[14];
     s16 var_a0_2;
@@ -1763,12 +1783,12 @@ void update_player(s32 playerId) {
                         (D_8016334C[playerId] < gGPCurrentRaceRankByPlayerId[playerId])) {
                         gPreviousCpuTargetSpeed[playerId] = 8.333333f;
                     } else if (D_80162FD0 == (s16) 1U) {
-                        gPreviousCpuTargetSpeed[playerId] = CM_GetProps()->D_0D0096B8[gCCSelection];
+                        gPreviousCpuTargetSpeed[playerId] = cpu_speed_for_cc(CM_GetProps()->D_0D0096B8);
                         gPlayerTrackPositionFactorInstruction[playerId].target = -0.5f;
                     } else if (gCurrentTrackConsecutiveCurveCountsPath[sSomeNearestPathPoint] > 0) {
-                        gPreviousCpuTargetSpeed[playerId] = CM_GetProps()->CurveTargetSpeed[gCCSelection];
+                        gPreviousCpuTargetSpeed[playerId] = cpu_speed_for_cc(CM_GetProps()->CurveTargetSpeed);
                     } else {
-                        gPreviousCpuTargetSpeed[playerId] = CM_GetProps()->NormalTargetSpeed[gCCSelection];
+                        gPreviousCpuTargetSpeed[playerId] = cpu_speed_for_cc(CM_GetProps()->NormalTargetSpeed);
                     }
                     CM_AICrossingBehaviour(playerId);
                     // check_ai_crossing_distance(playerId);
@@ -1959,44 +1979,15 @@ void update_player(s32 playerId) {
                 if ((gIsPlayerInCurve[playerId] == true) || (D_801630E8[playerId] == 1) ||
                     (D_801630E8[playerId] == -1) ||
                     (player->effects & (UNKNOWN_EFFECT_0x10000000 | UNKNOWN_EFFECT_0xC))) {
-                    cpu_TargetSpeed[playerId] = CM_GetProps()->CurveTargetSpeed[gCCSelection];
+                    cpu_TargetSpeed[playerId] = cpu_speed_for_cc(CM_GetProps()->CurveTargetSpeed);
                 } else {
-                    cpu_TargetSpeed[playerId] = CM_GetProps()->NormalTargetSpeed[gCCSelection];
+                    cpu_TargetSpeed[playerId] = cpu_speed_for_cc(CM_GetProps()->NormalTargetSpeed);
                 }
                 if ((gTrackPositionFactor[playerId] > 0.9f) || (gTrackPositionFactor[playerId] < -0.9f)) {
-                    cpu_TargetSpeed[playerId] = CM_GetProps()->OffTrackTargetSpeed[gCCSelection];
+                    cpu_TargetSpeed[playerId] = cpu_speed_for_cc(CM_GetProps()->OffTrackTargetSpeed);
                 }
                 if (D_80162FD0 == 1) {
-                    cpu_TargetSpeed[playerId] = CM_GetProps()->D_0D0096B8[gCCSelection];
-                }
-
-                if (CVarGetInteger("gEnableCustomCC", 0) == 1) {
-#define calc_a(x, y, x2, y2) (y2 - y) / (x2 - x)
-#define calc_b(x, y, b) y - (b * x)
-                    f32 a;
-                    f32 b;
-
-#define calc(table)                                   \
-    a = calc_a(50, table[CC_50], 150, table[CC_150]); \
-    b = calc_b(50, table[CC_50], a);                  \
-    cpu_TargetSpeed[playerId] = a * CVarGetFloat("gCustomCC", 150.0f) + b;
-                    // end of define
-                    if ((gIsPlayerInCurve[playerId] == true) || (D_801630E8[playerId] == 1) ||
-                        (D_801630E8[playerId] == -1) ||
-                        (player->effects & (UNKNOWN_EFFECT_0x10000000 | UNKNOWN_EFFECT_0xC))) {
-                        calc(CM_GetProps()->CurveTargetSpeed);
-                    } else {
-                        calc(CM_GetProps()->NormalTargetSpeed);
-                    }
-                    if ((gTrackPositionFactor[playerId] > 0.9f) || (gTrackPositionFactor[playerId] < -0.9f)) {
-                        calc(CM_GetProps()->OffTrackTargetSpeed);
-                    }
-                    if (D_80162FD0 == 1) {
-                        calc(CM_GetProps()->D_0D0096B8);
-                    }
-#undef calc_a
-#undef calc_b
-#undef calc
+                    cpu_TargetSpeed[playerId] = cpu_speed_for_cc(CM_GetProps()->D_0D0096B8);
                 }
 
                 if ((D_801630E8[playerId] == 2) || (D_801630E8[playerId] == -2) || (D_801630E8[playerId] == 3)) {
@@ -3504,7 +3495,7 @@ void init_players(void) {
             update_player_position_factor(i, 0, 0);
         }
         //! todo: @BUG this doesn't seem right. This variable is metadata.
-        cpu_TargetSpeed[i] = CM_GetProps()->CurveTargetSpeed[gCCSelection];
+        cpu_TargetSpeed[i] = cpu_speed_for_cc(CM_GetProps()->CurveTargetSpeed);
         D_801630E8[i] = 0;
         D_80163100[i] = 0;
         gPreviousPlayerAiOffsetX[i] = 0.0f;

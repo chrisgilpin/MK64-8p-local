@@ -113,16 +113,19 @@ void spawn_player(Player* player, s8 playerIndex, f32 startingRow, f32 startingC
             player->topSpeed = gTopSpeedTable[CC_BATTLE][player->characterId];
             break;
     }
-    if (CVarGetInteger("gEnableCustomCC", 0) == 1) {
+    /* Same 50cc→150cc line the custom-CC slider uses. The menu's 400cc wins
+       over the slider so the two cannot stack. */
+    if (gUse400cc || (CVarGetInteger("gEnableCustomCC", 0) == 1)) {
 #define calc_a(x, y, x2, y2) (y2 - y) / (x2 - x)
 #define calc_b(x, y, b) y - (b * x)
         f32 a;
         f32 b;
+        f32 cc = gUse400cc ? 400.0f : CVarGetFloat("gCustomCC", 150.0f);
 
 #define calc(table, field)                                                                      \
     a = calc_a(50, table[CC_50][player->characterId], 150, table[CC_150][player->characterId]); \
     b = calc_b(50, table[CC_50][player->characterId], a);                                       \
-    player->field = a * CVarGetFloat("gCustomCC", 150.0f) + b;
+    player->field = a * cc + b;
 
         calc(gTopSpeedTable, topSpeed);
         calc(D_800E2400, unk_084);
@@ -1107,6 +1110,24 @@ void spawn_and_set_player_spawns(void) {
 
             case SCREEN_MODE_3P_4P_SPLITSCREEN:
                 switch (gModeSelection) {
+                    case GRAND_PRIX:
+                        /* Three- and four-player Grand Prix had no arm here, so the
+                           karts stayed at the origin and every viewport showed the
+                           same spot. Same staggered grid the other Grand Prix modes
+                           use; the first gPlayerCountSelection1 slots are human. */
+                        D_80165210[0] = (D_80165210[2] = (D_80165210[4] = (D_80165210[6] = sp5E + 0x14)));
+                        D_80165210[1] = (D_80165210[3] = (D_80165210[5] = (D_80165210[7] = sp5E - 0x14)));
+                        D_80165230[0] = sp5C + 0x1E;
+                        D_80165230[1] = sp5C + 0x32;
+                        D_80165230[2] = sp5C + 0x46;
+                        D_80165230[3] = sp5C + 0x5A;
+                        D_80165230[4] = sp5C + 0x6E;
+                        D_80165230[5] = sp5C + 0x82;
+                        D_80165230[6] = sp5C + 0x96;
+                        D_80165230[7] = sp5C + 0xAA;
+                        spawn_players_gp_eight_player(D_80165210, D_80165230, sp5A);
+                        break;
+
                     case VERSUS:
                         D_80165210[0] = sp5E + 0x1E;
                         D_80165210[6] = sp5E - 0xA;

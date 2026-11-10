@@ -203,6 +203,12 @@ void setup_race(void) {
     LUSLOG_DEBUG("Game Speed: %d", gTickLogic);
 
     gPlayerCountSelection1 = gPlayerCount;
+    /* Debug CC picker leaves the 400cc row as CC_50. Promote it before anything
+       reads the class. The game-mode menu already did this on confirm. */
+    if (((gModeSelection == GRAND_PRIX) || (gModeSelection == VERSUS)) && (gCCSelection == CC_50)) {
+        gUse400cc = 1;
+        gCCSelection = CC_150;
+    }
     if (gGamestate != RACING) {
         set_mirror_mode(0);
     }
@@ -212,7 +218,12 @@ void setup_race(void) {
         gTrackDirection = 1.0f;
     }
     if (gModeSelection == GRAND_PRIX) {
-        gCurrentCourseId = gCupCourseOrder[gCupSelection][gCourseIndexInCup];
+        s32 courseId = GetCupCourseId(GetCupCursorPosition());
+
+        D_800DC540 = (s32) GetCupIndex();
+        if (courseId >= 0) {
+            gCurrentCourseId = (s16) courseId;
+        }
         // Skip for debug menu
         if (gMenuSelection != START_MENU) {
             TrackBrowser_SetTrackFromCup();
