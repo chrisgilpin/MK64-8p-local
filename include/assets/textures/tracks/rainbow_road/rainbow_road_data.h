@@ -82,15 +82,15 @@ static const char* d_course_rainbow_road_static_tluts[] = {
 	gTLUTRainbowRoadNeonToad,
 };
 
-static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_mushroom5[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_mushroom5";
-
-static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_mushroom4[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_mushroom4";
-
 static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_mushroom3[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_mushroom3";
+
+static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_mushroom2[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_mushroom2";
 
 static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_mushroom1[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_mushroom1";
 
-static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_mushroom2[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_mushroom2";
+static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_mushroom4[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_mushroom4";
+
+static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_mushroom5[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_mushroom5";
 
 static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_mario1[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_mario1";
 
@@ -102,7 +102,7 @@ static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_mario4[] = "__OTR__t
 
 static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_mario5[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_mario5";
 
-static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_boo1[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_boo1";
+static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_boo5[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_boo5";
 
 static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_boo2[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_boo2";
 
@@ -110,7 +110,7 @@ static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_boo3[] = "__OTR__tex
 
 static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_boo4[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_boo4";
 
-static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_boo5[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_boo5";
+static const ALIGN_ASSET(2) char d_course_rainbow_road_neon_boo1[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/d_course_rainbow_road_neon_boo1";
 
 static const ALIGN_ASSET(2) char gTextureRainbowRoadNeonPeach[] = "__OTR__textures/tracks/rainbow_road/rainbow_road_data/gTextureRainbowRoadNeonPeach";
 
