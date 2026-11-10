@@ -54,35 +54,57 @@ u32 World::GetCupIndex() {
     return this->CupIndex;
 }
 
-u32 World::NextCup() {
-    s32 hack = 1;
+/* A cup stays in the list even when its mod is missing, so cup indexes do not
+   shift. It is not a choice until every track id is actually loaded. */
+static bool cup_tracks_are_installed(Cup* cup) {
+    if (cup == nullptr) {
+        return false;
+    }
+    for (const auto& trackId : cup->mTracks) {
+        if (!gTrackRegistry.Find(trackId)) {
+            return false;
+        }
+    }
+    return !cup->mTracks.empty();
+}
 
-    // Do not display battle mode on GP, TT, or VS
-    if (gModeSelection != BATTLE) {
-        hack = 2;
+u32 World::NextCup() {
+    /* Battle is last and is not a GP, VS, or time-trial choice. */
+    size_t limit = Cups.size();
+    if ((gModeSelection != BATTLE) && (limit > 0)) {
+        limit -= 1;
     }
 
-    if (CupIndex < Cups.size() - hack) {
-        CupIndex++;
-        CurrentCup = Cups[CupIndex];
+    for (size_t index = CupIndex + 1; index < limit; index++) {
+        if (!cup_tracks_are_installed(Cups[index])) {
+            continue;
+        }
+        CupIndex = index;
+        CurrentCup = Cups[index];
         CurrentCup->CursorPosition = 0;
         reset_cycle_flash_menu();
         play_sound2(SOUND_MENU_CURSOR_MOVE);
-        return CupIndex;
+        return (u32) CupIndex;
     }
-    return Cups.size() - hack;
+    return (u32) CupIndex;
 }
 
 u32 World::PreviousCup() {
-    if (CupIndex > 0) {
-        CupIndex--;
-        CurrentCup = Cups[CupIndex];
+    size_t index = CupIndex;
+
+    while (index > 0) {
+        index--;
+        if (!cup_tracks_are_installed(Cups[index])) {
+            continue;
+        }
+        CupIndex = index;
+        CurrentCup = Cups[index];
         CurrentCup->CursorPosition = 0;
         reset_cycle_flash_menu();
         play_sound2(SOUND_MENU_CURSOR_MOVE);
-        return CupIndex;
+        return (u32) CupIndex;
     }
-    return 0;
+    return (u32) CupIndex;
 }
 
 void World::SetCupIndex(size_t index) {

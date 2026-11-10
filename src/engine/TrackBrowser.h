@@ -62,9 +62,11 @@ public:
     void SetTrack(std::string name) {
         if (gTrackRegistry.Find(name)) {
             gTrackRegistry.Invoke(name);
-        } else {
-            throw std::runtime_error("[World] [SetTrack()] Track name not found in Track list: " + name);
+            return;
         }
+        /* Course select calls this every frame. Throwing aborts the game when
+           the highlighted cup names a mod that is not installed. */
+        printf("[TrackBrowser] SetTrack: '%s' is not loaded\n", name.c_str());
     }
 
     void NextTrack() {

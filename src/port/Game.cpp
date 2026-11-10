@@ -155,8 +155,8 @@ void CustomEngineInit() {
     try {
         gGoodhouseCup->ValidateTrackIds(gTrackRegistry);
     } catch (const std::exception& e) {
-        /* Mod missing or tracks failed to load — still register the cup so
-           the list stays stable; selection will error until the mod is present. */
+        /* Mod missing or tracks failed to load. Keep the cup so indexes stay
+           stable. NextCup skips it until the tracks are installed. */
         printf("[Game] goodhouse cup track validation: %s\n", e.what());
     }
     gBattleCup->ValidateTrackIds(gTrackRegistry);
