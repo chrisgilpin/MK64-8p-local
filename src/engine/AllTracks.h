@@ -8,6 +8,7 @@
 #include "engine/tracks/YoshiValley.h"
 #include "engine/tracks/FrappeSnowland.h"
 #include "engine/tracks/KoopaTroopaBeach.h"
+#include "engine/tracks/KoopaBeachExtended.h"
 #include "engine/tracks/RoyalRaceway.h"
 #include "engine/tracks/LuigiRaceway.h"
 #include "engine/tracks/MooMooFarm.h"

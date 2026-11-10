@@ -115,6 +115,12 @@ void World::SetCurrentCup(Cup* cup) {
     if (cup) {
         CurrentCup = cup;
         CurrentCup->CursorPosition = 0;
+        for (size_t i = 0; i < Cups.size(); i++) {
+            if (Cups[i] == cup) {
+                CupIndex = i;
+                break;
+            }
+        }
     }
 }
 

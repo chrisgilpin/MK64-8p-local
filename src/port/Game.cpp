@@ -40,6 +40,7 @@
 #endif
 
 extern "C" {
+#include <mk64.h>
 #include "main.h"
 #include "audio/load.h"
 #include "audio/external.h"
@@ -67,6 +68,7 @@ std::unique_ptr<Cup> gMushroomCup;
 std::unique_ptr<Cup> gFlowerCup;
 std::unique_ptr<Cup> gStarCup;
 std::unique_ptr<Cup> gSpecialCup;
+std::unique_ptr<Cup> gAndysFavesCup;
 std::unique_ptr<Cup> gGoodhouseCup;
 std::unique_ptr<Cup> gBattleCup;
 
@@ -131,6 +133,13 @@ void CustomEngineInit() {
         "mk:rainbow_road"
     });
 
+    gAndysFavesCup = std::make_unique<Cup>("mk:andys_faves", "ANDYS FAVES", std::vector<std::string>{
+        "chris:south_ci_v2",
+        "chris:sky_tower",
+        "chris:western",
+        "chris:cottage",
+    });
+
     /* Custom GP cup: four tracks from the goodhouse-cup mod
        (mods/goodhouse-cup.o2r). IDs must match scene.json ResourceName. */
     gGoodhouseCup = std::make_unique<Cup>("goodhouse:goodhouse_cup", "goodhouse", std::vector<std::string>{
@@ -153,6 +162,13 @@ void CustomEngineInit() {
     gStarCup->ValidateTrackIds(gTrackRegistry);
     gSpecialCup->ValidateTrackIds(gTrackRegistry);
     try {
+        gAndysFavesCup->ValidateTrackIds(gTrackRegistry);
+    } catch (const std::exception& e) {
+        /* Sky Tower comes from mods/sky-tower.o2r. Keep the cup if that
+           file is missing so the rest of the game still starts. */
+        printf("[Game] ANDYS FAVES track validation: %s\n", e.what());
+    }
+    try {
         gGoodhouseCup->ValidateTrackIds(gTrackRegistry);
     } catch (const std::exception& e) {
         /* Mod missing or tracks failed to load. Keep the cup so indexes stay
@@ -166,6 +182,7 @@ void CustomEngineInit() {
     GetWorld()->AddCup(gFlowerCup.get());
     GetWorld()->AddCup(gStarCup.get());
     GetWorld()->AddCup(gSpecialCup.get());
+    GetWorld()->AddCup(gAndysFavesCup.get());
     GetWorld()->AddCup(gGoodhouseCup.get());
     GetWorld()->AddCup(gBattleCup.get());
 
@@ -185,6 +202,7 @@ void CustomEngineDestroy() {
     gFlowerCup.reset();
     gStarCup.reset();
     gSpecialCup.reset();
+    gAndysFavesCup.reset();
     gBattleCup.reset();
 }
 
@@ -236,6 +254,62 @@ void CM_SetCupIndex(size_t index) {
 
 const char* GetCupName(void) {
     return GetWorld()->GetCurrentCup()->Name;
+}
+
+const char* GetCupTrackName(s32 slot) {
+    Cup* cup = GetWorld()->GetCurrentCup();
+
+    if ((cup == nullptr) || (slot < 0) || ((size_t) slot >= cup->mTracks.size())) {
+        return "";
+    }
+
+    const TrackInfo* info = gTrackRegistry.GetInfo(cup->mTracks[slot]);
+    if ((info == nullptr) || info->Name.empty()) {
+        return "";
+    }
+    return info->Name.c_str();
+}
+
+s32 GetCupCourseId(s32 slot) {
+    Cup* cup = GetWorld()->GetCurrentCup();
+    static const struct {
+        const char* resource;
+        s32 courseId;
+    } stock[] = {
+        { "mk:mario_raceway", TRACK_MARIO_RACEWAY },
+        { "mk:choco_mountain", TRACK_CHOCO_MOUNTAIN },
+        { "mk:bowsers_castle", TRACK_BOWSER_CASTLE },
+        { "mk:banshee_boardwalk", TRACK_BANSHEE_BOARDWALK },
+        { "mk:yoshi_valley", TRACK_YOSHI_VALLEY },
+        { "mk:frappe_snowland", TRACK_FRAPPE_SNOWLAND },
+        { "mk:koopa_troopa_beach", TRACK_KOOPA_BEACH },
+        { "mk:koopa_beach_extended", TRACK_KOOPA_BEACH },
+        { "mk:royal_raceway", TRACK_ROYAL_RACEWAY },
+        { "mk:luigi_raceway", TRACK_LUIGI_RACEWAY },
+        { "mk:moo_moo_farm", TRACK_MOO_MOO_FARM },
+        { "mk:toads_turnpike", TRACK_TOADS_TURNPIKE },
+        { "mk:kalimari_desert", TRACK_KALIMARI_DESERT },
+        { "mk:sherbet_land", TRACK_SHERBET_LAND },
+        { "mk:rainbow_road", TRACK_RAINBOW_ROAD },
+        { "mk:wario_stadium", TRACK_WARIO_STADIUM },
+        { "mk:block_fort", TRACK_BLOCK_FORT },
+        { "mk:skyscraper", TRACK_SKYSCRAPER },
+        { "mk:double_deck", TRACK_DOUBLE_DECK },
+        { "mk:dk_jungle", TRACK_DK_JUNGLE },
+        { "mk:big_donut", TRACK_BIG_DONUT },
+    };
+    size_t i;
+
+    if ((cup == nullptr) || (slot < 0) || ((size_t) slot >= cup->mTracks.size())) {
+        return -1;
+    }
+
+    for (i = 0; i < sizeof(stock) / sizeof(stock[0]); i++) {
+        if (cup->mTracks[slot] == stock[i].resource) {
+            return stock[i].courseId;
+        }
+    }
+    return -1;
 }
 
 void LoadTrack() {

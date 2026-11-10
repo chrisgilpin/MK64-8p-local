@@ -59,6 +59,12 @@ u32 GetCupIndex(void);
 
 const char* GetCupName(void);
 
+/* Display name of track `slot` (0-3) in the current cup. Empty if unknown. */
+const char* GetCupTrackName(s32 slot);
+
+/* Stock course id for track `slot` in the current cup, or -1 for a mod track. */
+s32 GetCupCourseId(s32 slot);
+
 void LoadTrack();
 
 void CM_SetCup(void*);

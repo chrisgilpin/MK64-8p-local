@@ -230,4 +230,15 @@ void RegisterTracks(Registry<TrackInfo>& r) {
     };
 
     r.Add(info, []() { GetWorld()->SetCurrentTrack(std::make_unique<TestTrack>()); });
+
+    /* Appended so the stock course ids above stay put. */
+    info = {
+        .ResourceName = "mk:koopa_beach_extended",
+        .Name = "koopa beach extended",
+        .DebugName = "beach ext",
+        .Length = "860m",
+        .MinimapTexture = minimap_koopa_troopa_beach,
+    };
+
+    r.Add(info, []() { GetWorld()->SetCurrentTrack(std::make_unique<KoopaBeachExtended>()); });
 }
